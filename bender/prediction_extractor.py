@@ -1,5 +1,5 @@
 from enum import Enum, EnumMeta
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 from pandas.core.frame import DataFrame, Series
 
@@ -54,5 +54,5 @@ PredictableType = TypeVar('PredictableType')
 
 class Predictable:
 
-    def predict(self, on: Callable[[DataFrame], Series], extractors: list[PredictionExtractor]) -> PredictableType:
+    def predict(self, on: Optional[Callable[[DataFrame], Series]] = None) -> PredictableType:
         raise NotImplementedError()

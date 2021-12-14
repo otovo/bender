@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar
+from numpy.testing import run_module_suite
 
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
@@ -34,8 +35,8 @@ class LoadedDataAndModel(Processable, Predictable, RunnablePipeline):
         # Some processing of the data
         return LoadedDataAndModel(self.data_loader.process(transformations), self.model_loader)
 
-    def predict(self, on: Callable[[DataFrame], Series], extractors: list[PredictionExtractor]) -> PredictionPipeline:
-        return PredictionPipeline(self, predict_on=on, extractors=extractors)
+    def predict(self, on: Optional[Callable[[DataFrame], Series]] = None) -> PredictionPipeline:
+        return PredictionPipeline(self, predict_on=on)
 
     async def run(self) -> tuple[TrainedModel, DataFrame]:
         processed_data = await self.data_loader.run()
@@ -45,7 +46,28 @@ class LoadedDataAndModel(Processable, Predictable, RunnablePipeline):
 class PredictionPipeline(RunnablePipeline):
 
     data_and_model: LoadedDataAndModel
-    predict_on: Callable[[DataFrame], Series]
+    predict_on: Optional[Callable[[DataFrame], Series]]
+
+
+    def __init__(self, data_and_model: LoadedDataAndModel, predict_on: Optional[Callable[[DataFrame], Series]]) -> None:
+        self.data_and_model = data_and_model
+        self.predict_on = predict_on
+
+    async def run(self) -> Series:
+        model, processed_data = await self.data_and_model.run()
+
+        if self.predict_on:
+            predict_on_filter = self.predict_on(processed_data)
+            predict_on_data = processed_data[predict_on_filter]
+        else:
+            predict_on_data = processed_data
+
+        return model.predict(predict_on_data)
+
+class ExtractFromPredictionPipeline(RunnablePipeline):
+
+    data_and_model: LoadedDataAndModel
+    predict_on: Optional[Callable[[DataFrame], Series]]
     extractors: list[PredictionExtractor]
 
 
@@ -84,31 +106,36 @@ class LoadedModel(DataImportable, RunnablePipeline):
         self.model_loader = model_loader
 
     def import_data(self, importer: DataImporter) -> LoadedDataAndModel:
-        return LoadedDataAndModel(LoadedData(importer), self)
+        return LoadedDataAndModel(importer, self)
 
     async def run(self) -> TrainedModel:
         return await self.model_loader.load_model()
 
 
-class LoadedData(Processable, ModelLoadable, RunnablePipeline, Splitable):
+class LoadedData(Processable, ModelLoadable, RunnablePipeline, Splitable, DataImporter):
 
-    data_importer: DataImporter
+    importer: DataImporter
     transformations: list[Transformation]
 
-    def __init__(self, data_importer: DataImporter, transformations: list[Transformation] = []) -> None:
-        self.data_importer = data_importer
+    def __init__(self, importer: DataImporter, transformations: list[Transformation] = []) -> None:
+        self.importer = importer
         self.transformations = transformations
+        assert isinstance(importer, DataImporter)
 
     def process(self, transformations: list[Transformation]) -> LoadedData:
         # Some processing of the data
-        return LoadedData(self.data_importer, self.transformations + transformations)
+        return LoadedData(self.importer, self.transformations + transformations)
 
     def load_model(self, model_loader: ModelLoader) -> LoadedDataAndModel:
         return LoadedDataAndModel(self, LoadedModel(model_loader))
 
+    async def import_data(self) -> DataFrame:
+        return await self.run()
+
     async def run(self) -> DataFrame:
         logger.info('Fetching data')
-        df = await self.data_importer.import_data()
+        print(self.importer)
+        df = await self.importer.import_data()
         logger.info('Fetched data')
 
         for transformation in self.transformations:

@@ -57,12 +57,7 @@ class RandomRatioSplitter(SplitStrategy):
 
         train = df[:split_index]
         validate = df[split_index:]
-
-        x_features = list(df.columns)
-        for remove_feature in self.y_features:
-            if remove_feature in x_features:
-                x_features.remove(remove_feature)
-
+        
         return train, validate
 
 

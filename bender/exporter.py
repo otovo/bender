@@ -1,8 +1,10 @@
-from typing import Union
+from __future__ import annotations
+from typing import Optional, Union
 from matplotlib.figure import Figure as PltFigure
 from plotly.graph_objects import Figure as PlotFigure
 from pandas.core.frame import DataFrame
 import gspread
+import matplotlib.pyplot as plt
 
 Figure = Union[PltFigure, PlotFigure]
 
@@ -10,9 +12,31 @@ class Exporter:
     async def store_figure(self, figure: Figure):
         raise NotImplementedError()
 
-    async def store_data_frame(self, df: DataFrame):
-        raise NotImplementedError()
+    # @staticmethod
+    # def clearml(logger=Logger) -> ClearmlExporter:
+    #     return ClearmlExporter(logger)
 
+    @staticmethod
+    def disk(path: str) -> LocalDiskExporter:
+        return LocalDiskExporter(path)
+
+    @staticmethod
+    def in_memory() -> MemoryExporter:
+        return MemoryExporter()
+
+
+class ChainedExporter(Exporter):
+
+    first: Exporter
+    second: Exporter
+
+    def __init__(self, first: Exporter, second: Exporter) -> None:
+        self.first = first
+        self.second = second
+
+    async def store_figure(self, figure: Figure):
+        await self.first.store_figure(figure)
+        await self.second.store_figure(figure)
 
 class LocalDiskExporter(Exporter):
 
@@ -20,10 +44,6 @@ class LocalDiskExporter(Exporter):
 
     def __init__(self, path: str) -> None:
         self.path = path
-
-    async def store_data_frame(self, df: DataFrame):
-        used_path = self.path + ".csv"
-        df.to_csv(used_path)
 
     async def store_figure(self, figure: Figure):
         used_path = self.path + ".png"
@@ -36,22 +56,33 @@ class LocalDiskExporter(Exporter):
         else:
             raise NotImplementedError()
 
-
-class GoogleDriveExporter(Exporter):
-
-    credentials_path: str
-    file_name: str
-
-    async def store_data_frame(self, df: DataFrame):
-        # Should store csv using the Docs API
-        # https://developers.google.com/docs/api/reference/rest/v1/documents/create
-        sheet = self._service().create(self.file_name)
-        sheet.update([df.columns.values.tolist()] + df.values.tolist())
+class MemoryExporter(Exporter):
 
     async def store_figure(self, figure: Figure):
-        raise NotImplementedError()
+        if isinstance(figure, PltFigure):
+            plt.show()
+        elif isinstance(figure, PlotFigure):
+            plt.show()
+        else:
+            raise NotImplementedError()
 
 
-    def _service(self):
-        return gspread.service_account()
+# class ClearmlExporter(Exporter):
+
+#     logger: Logger
+
+#     def __init__(self, logger: Logger) -> None:
+#         self.logger = logger
+
+#     async def store_data_frame(self, df: DataFrame):
+#         raise NotImplementedError()
+
+#     async def store_figure(self, figure: Figure):
+#         if isinstance(figure, PltFigure):
+#             plt.show(block=False)
+#             plt.close()
+#         elif isinstance(figure, PlotFigure):
+#             self.logger.report_plotly(title="plotly plot", series="plotly", figure=figure)
+#         else:
+#             raise NotImplementedError()
 

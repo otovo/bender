@@ -31,13 +31,13 @@ class ModelLoader:
 
 class LiteralLoader(ModelLoader):
 
-    literal: str
+    model: TrainedModel
 
-    def __init__(self, data: str) -> None:
-        self.literal = data
+    def __init__(self, model: TrainedModel) -> None:
+        self.model = model
 
     async def load_model(self) -> TrainedModel:
-        return TrainedXGBoostModel.from_json(self.literal)
+        return self.model
 
 
 class S3ModelLoader(ModelLoader):
