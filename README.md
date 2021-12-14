@@ -58,16 +58,14 @@ ModelLoaders
     # Load data
     .import_data(
         DataImporters.sql(sql_url, sql_query)
+            # Caching import localy for 1 day
             .cached("cache/path")
     )
-
     # Preproces the data
     .process([
-        # Extract advanced information from json data
-        Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackPolicy.median_number())
+        Transformations.unpack_json(...),
         ...
     ])
-    
     # Predict the values
     .predict()
 ```
