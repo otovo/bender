@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from bender.model_trainer import ModelTrainer, XGBoostTrainer
 from bender.split_strategy import SplitStrategy
-from bender.transformation import UnpackTypePolicy
+from bender.transformation import UnpackPolicy
 
 from bender.transformations import Transformations
 
@@ -64,23 +64,23 @@ async def test_training_pipeline(input_data):
 
 
 
-async def run_test_for(policy: UnpackTypePolicy, name: str, json_df: DataFrame) -> None:
+async def run_test_for(policy: UnpackPolicy, name: str, json_df: DataFrame) -> None:
     transformation = Transformations.unpack_json('json_data', key='value', output_feature=f'out_{name}', policy=policy)
     ret_df = await transformation.transform(json_df)
     assert np.all(ret_df[f'out_{name}'] == ret_df[f'value_{name}'])
 
 
 async def test_unpack_json_median(json_df: DataFrame) -> None:
-    await run_test_for(UnpackTypePolicy.median_number(), 'median', json_df)
+    await run_test_for(UnpackPolicy.median_number(), 'median', json_df)
 
 
 async def test_unpack_json_mean(json_df: DataFrame) -> None:
-    await run_test_for(UnpackTypePolicy.mean_number(), 'mean', json_df)
+    await run_test_for(UnpackPolicy.mean_number(), 'mean', json_df)
 
 
 async def test_unpack_json_min(json_df: DataFrame) -> None:
-    await run_test_for(UnpackTypePolicy.min_number(), 'min', json_df)
+    await run_test_for(UnpackPolicy.min_number(), 'min', json_df)
 
 
 async def test_unpack_json_max(json_df: DataFrame) -> None:
-    await run_test_for(UnpackTypePolicy.max_number(), 'max', json_df)
+    await run_test_for(UnpackPolicy.max_number(), 'max', json_df)

@@ -1,6 +1,6 @@
 from typing import Optional, Callable
 from pandas import DataFrame, Series
-from bender.transformation import LogNormalDistributionShift, DateComponent, UnpackJson, NeighbourDistance, UnpackTypePolicy
+from bender.transformation import LogNormalDistributionShift, DateComponent, UnpackJson, NeighbourDistance, UnpackPolicy
 
 class Transformations:
 
@@ -13,7 +13,7 @@ class Transformations:
         return DateComponent(component, input_feature, output_feature)
 
     @staticmethod
-    def unpack_json(input_feature: str, key: str, output_feature: str, policy: UnpackTypePolicy) -> UnpackJson:
+    def unpack_json(input_feature: str, key: str, output_feature: str, policy: UnpackPolicy) -> UnpackJson:
         return UnpackJson(input_feature, key, output_feature, policy)
 
     @staticmethod

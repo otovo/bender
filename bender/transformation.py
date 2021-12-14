@@ -204,32 +204,32 @@ class UnpackList(Transformation):
         return df
 
 
-class UnpackTypePolicy:
+class UnpackPolicy:
     def unpack(self, column: Series, key: str) -> Series:
         raise NotImplementedError()
 
     @staticmethod
-    def min_number() -> UnpackTypePolicy:
+    def min_number() -> UnpackPolicy:
         return UnpackNumber(lambda df: df.min())
 
     @staticmethod
-    def max_number() -> UnpackTypePolicy:
+    def max_number() -> UnpackPolicy:
         return UnpackNumber(lambda df: df.max())
 
     @staticmethod
-    def median_number() -> UnpackTypePolicy:
+    def median_number() -> UnpackPolicy:
         return UnpackNumber(lambda df: df.median())
 
     @staticmethod
-    def mean_number() -> UnpackTypePolicy:
+    def mean_number() -> UnpackPolicy:
         return UnpackNumber(lambda df: df.mean())
 
     @staticmethod
-    def first_string() -> UnpackTypePolicy:
+    def first_string() -> UnpackPolicy:
         return UnpackString()
 
 
-class UnpackNumber(UnpackTypePolicy):
+class UnpackNumber(UnpackPolicy):
 
     metric: Callable[[SeriesGroupBy], Series]
 
@@ -249,7 +249,7 @@ class UnpackNumber(UnpackTypePolicy):
         return self.metric(grouped).astype(float)
 
 
-class UnpackString(UnpackTypePolicy):
+class UnpackString(UnpackPolicy):
     def unpack(self, column: Series, key: str) -> Series:
         bracket = '}'
         regex_str = rf'"{key}"[\s:]+"([\w ]+)["{bracket},]'
@@ -261,9 +261,9 @@ class UnpackJson(Transformation):
     input_feature: str
     key: str
     output_feature: str
-    policy: UnpackTypePolicy
+    policy: UnpackPolicy
 
-    def __init__(self, input_feature: str, key: str, output_feature: str, policy: UnpackTypePolicy) -> None:
+    def __init__(self, input_feature: str, key: str, output_feature: str, policy: UnpackPolicy) -> None:
         self.input_feature = input_feature
         self.key = key
         self.output_feature = output_feature

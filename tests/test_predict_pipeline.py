@@ -9,7 +9,7 @@ from numpy.testing import assert_almost_equal
 from bender.model_loaders import ModelLoaders
 from bender.model_trainer import DecisionTreeClassifierTrainer, ModelTrainer
 from bender.split_strategy import SplitStrategy
-from bender.transformation import UnpackTypePolicy
+from bender.transformation import UnpackPolicy
 
 from bender.transformations import Transformations
 

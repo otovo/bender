@@ -16,7 +16,7 @@ DataImporters
     # Preproces the data
     .process([
         # Extract advanced information from json data
-        Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackTypePolicy.median_number())
+        Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackPolicy.median_number())
 
         Transformations.log_normal_shift("y_values", "y_log"),
         
@@ -64,7 +64,7 @@ ModelLoaders
     # Preproces the data
     .process([
         # Extract advanced information from json data
-        Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackTypePolicy.median_number())
+        Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackPolicy.median_number())
         ...
     ])
     
