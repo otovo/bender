@@ -6,6 +6,26 @@ A package for faster, safer, and simpler ML processes.
 
 Bender will make your machine learning processes, faster, safer, simpler while at the same time making it easy and flexible. This is done by providing a set base component, around the core processes that will take place in a ML pipeline process. While also helping you with type hints about what your next move could be.
 
+## Pipeline Safety
+
+The whole pipeline is build using generics from Python's typing system. Resulting in an improved developer experience, as the compiler can know if your pipeline's logic makes sense before it has started. 
+
+Bender will therefore make sure you **can't** make errors like
+
+```python
+# ⛔️ Invalid pipeline
+DataImporters.sql(...)
+    .process([...])
+    # Compile Error: method `predict()` is not available
+    .predict()
+
+# ✅ Valid pipeline
+DataImporters.sql(...)
+    .process([...])
+    .load_model(ModelLoader.aws_s3(...))
+    .predict()
+```
+
 ## Training Example
 Below is a simple example for training a XGBoosted tree
 ```python
