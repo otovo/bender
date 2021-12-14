@@ -1,6 +1,6 @@
 # Bender 🤖
 
-A package for getting you ML processes up and rolling.
+A package for faster, safer, and simpler ML processes.
 
 ## Why use `bender`?
 
