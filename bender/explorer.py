@@ -1,14 +1,20 @@
 from __future__ import annotations
-from typing import Optional
-from pandas import DataFrame
 
-from bender.exporter import Exporter
+import logging
+from typing import Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
+from pandas import DataFrame
+
+from bender.exporter.exporter import Exporter
+
+logger = logging.getLogger(__name__)
+
 
 class Explorer:
-    async def explore(self, df: DataFrame):
+    async def explore(self, df: DataFrame) -> None:
         raise NotImplementedError()
 
     @staticmethod
@@ -16,7 +22,9 @@ class Explorer:
         return FeatureCorrelationMatrix(exporter)
 
     @staticmethod
-    def histogram(key: Optional[str] = None, bins: Optional[int] = None, exporter: Exporter = Exporter.in_memory()) -> Explorer:
+    def histogram(
+        key: Optional[str] = None, bins: Optional[int] = None, exporter: Exporter = Exporter.in_memory()
+    ) -> Explorer:
         return HistogramExplorer(key, bins, exporter)
 
     @staticmethod
@@ -27,6 +35,7 @@ class Explorer:
     def violin_plot(x_key: str, y_key: Optional[str] = None, exporter: Exporter = Exporter.in_memory()) -> Explorer:
         return ViolinPlotExplorer(x_key, y_key, exporter)
 
+
 class FeatureCorrelationMatrix(Explorer):
 
     exporter: Exporter
@@ -34,7 +43,7 @@ class FeatureCorrelationMatrix(Explorer):
     def __init__(self, exporter: Exporter) -> None:
         self.exporter = exporter
 
-    async def explore(self, df: DataFrame):
+    async def explore(self, df: DataFrame) -> None:
         corr_heatmap = df.corr()
         corr_threshold = 0.9
         for feature in df.columns:
@@ -46,15 +55,22 @@ class FeatureCorrelationMatrix(Explorer):
             if len(correlated_featrues) == 0:
                 continue
             new_mask = column_values.columns.isin(correlated_featrues)
-            print("Warning: Correlated features should be considered to be removed")
-            print(f"{feature} is related to {correlated_featrues}, corr values: {column_values.iloc[0][new_mask]}")
+            logger.info('Warning: Correlated features should be considered to be removed')
+            logger.info(
+                f'{feature} is related to {correlated_featrues}, corr values: {column_values.iloc[0][new_mask]}'
+            )
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(corr_heatmap, mask=np.zeros_like(corr_heatmap, dtype=np.bool),
-                    cmap=sns.diverging_palette(220, 10, as_cmap=True),
-                    square=True, ax=ax)
-        ax.set_title("Correlation Matrix")
+        sns.heatmap(
+            corr_heatmap,
+            mask=np.zeros_like(corr_heatmap, dtype=np.bool),
+            cmap=sns.diverging_palette(220, 10, as_cmap=True),
+            square=True,
+            ax=ax,
+        )
+        ax.set_title('Correlation Matrix')
         await self.exporter.store_figure(fig)
+
 
 class HistogramExplorer(Explorer):
 
@@ -67,10 +83,11 @@ class HistogramExplorer(Explorer):
         self.bins = bins
         self.exporter = exporter
 
-    async def explore(self, df: DataFrame):
+    async def explore(self, df: DataFrame) -> None:
         fig, ax = plt.subplots(figsize=(10, 8))
         ax = df.hist(self.key, bins=self.bins, ax=ax)
         await self.exporter.store_figure(fig)
+
 
 class ScatterChartExplorer(Explorer):
 
@@ -83,9 +100,10 @@ class ScatterChartExplorer(Explorer):
         self.y_key = y_key
         self.exporter = exporter
 
-    async def explore(self, df: DataFrame):
+    async def explore(self, df: DataFrame) -> None:
         g = sns.jointplot(x=self.x_key, y=self.y_key, data=df)
         await self.exporter.store_figure(g)
+
 
 class ViolinPlotExplorer(Explorer):
 
@@ -98,7 +116,7 @@ class ViolinPlotExplorer(Explorer):
         self.y_key = y_key
         self.exporter = exporter
 
-    async def explore(self, df: DataFrame):
+    async def explore(self, df: DataFrame) -> None:
         fig, ax = plt.subplots(figsize=(10, 8))
         sns.violinplot(x=self.x_key, y=self.y_key, ax=ax)
         await self.exporter.store_figure(fig)

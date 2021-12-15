@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, TypeVar
+from typing import Any, Generic, TypeVar
 
 from aioaws.s3 import S3Client, S3Config
 from httpx import AsyncClient
 
-from bender.model_trainer import TrainedModel, TrainedXGBoostModel
-import logging
+from bender.trainer.model_trainer import TrainedModel, TrainedXGBoostModel
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +65,7 @@ class S3ModelLoader(ModelLoader):
 
 ModelLoaderType = TypeVar('ModelLoaderType')
 
-class ModelLoadable:
+
+class ModelLoadable(Generic[ModelLoaderType]):
     def load_model(self, model: ModelLoader) -> ModelLoaderType:
         raise NotImplementedError()

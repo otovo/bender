@@ -1,11 +1,21 @@
-from typing import Optional, Callable
+from typing import Callable, Optional
+
 from pandas import DataFrame, Series
-from bender.transformation import LogNormalDistributionShift, DateComponent, UnpackJson, NeighbourDistance, UnpackPolicy
+
+from bender.transformation.transformation import (
+    DateComponent,
+    LogNormalDistributionShift,
+    NeighbourDistance,
+    UnpackJson,
+    UnpackPolicy,
+)
+
 
 class Transformations:
-
     @staticmethod
-    def log_normal_shift(input_feature: str, output_feature: str, input_has_zeros: bool = True) -> LogNormalDistributionShift:
+    def log_normal_shift(
+        input_feature: str, output_feature: str, input_has_zeros: bool = True
+    ) -> LogNormalDistributionShift:
         return LogNormalDistributionShift(input_feature, output_feature, input_has_zeros)
 
     @staticmethod
@@ -21,6 +31,6 @@ class Transformations:
         number_of_neighbours: int,
         latitude: str = 'latitude',
         longitude: str = 'longitude',
-        to: Optional[Callable[[DataFrame], Series]] = None
+        to: Optional[Callable[[DataFrame], Series]] = None,
     ) -> NeighbourDistance:
         return NeighbourDistance(number_of_neighbours, latitude, longitude, to)

@@ -1,28 +1,31 @@
 from __future__ import annotations
-from typing import Optional, Callable, TypeVar, Any
-from pandas import DataFrame
+
+import logging
+from typing import Any, Callable, Generic, Optional, TypeVar
+
+import numpy as np
+import pandas as pd
 from numpy import log1p, log2
+from pandas import DataFrame
 from pandas.core.groupby.generic import SeriesGroupBy
 from pandas.core.series import Series
-import pandas as pd
-import logging
-import numpy as np
 from sklearn.neighbors import BallTree
 
 logger = logging.getLogger(__name__)
 
 
 class Transformation:
-
     async def transform(self, df: DataFrame) -> DataFrame:
         raise NotImplementedError()
 
     def only_if(self, should_run: bool) -> Transformation:
         return OptionalTransformation(self, should_run=should_run)
 
+
 ProcessResultType = TypeVar('ProcessResultType')
 
-class Processable:
+
+class Processable(Generic[ProcessResultType]):
     def process(self, transformations: list[Transformation]) -> ProcessResultType:
         raise NotImplementedError()
 
@@ -93,9 +96,6 @@ class LogDataInfo(Transformation):
 
 
 class Filter(Transformation):
-
-    lambda_function: Callable[[DataFrame], Series]
-
     def __init__(self, lambda_function: Callable[[DataFrame], Series]) -> None:
         self.lambda_function = lambda_function
 
@@ -150,7 +150,6 @@ class DateComponent(Transformation):
 
 class BinaryTransform(Transformation):
 
-    lambda_function: Callable[[DataFrame], Series]
     output_feature: str
 
     def __init__(self, output_feature: str, lambda_function: Callable[[DataFrame], Series]) -> None:
@@ -230,10 +229,7 @@ class UnpackPolicy:
 
 
 class UnpackNumber(UnpackPolicy):
-
-    metric: Callable[[SeriesGroupBy], Series]
-
-    def __init__(self, metric: Callable[[SeriesGroupBy], float]) -> None:
+    def __init__(self, metric: Callable[[SeriesGroupBy], Series]) -> None:
         self.metric = metric
 
     def unpack(self, column: Series, key: str) -> Series:
@@ -395,9 +391,6 @@ class FillMissingValue(Transformation):
 
 
 class CustomCodeTransformation(Transformation):
-
-    transformation: Callable[[DataFrame], DataFrame]
-
     def __init__(self, transformation: Callable[[DataFrame], DataFrame]) -> None:
         self.transformation = transformation
 

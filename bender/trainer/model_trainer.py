@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, TypeVar
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 from pandas.core.frame import DataFrame, Series
@@ -9,7 +9,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from bender.split_strategy import TrainingDataSet
+from bender.split_strategy.split_strategy import TrainingDataSet
+
 
 class TrainedModel:
 
@@ -42,6 +43,7 @@ class TrainedRegressionModel(TrainedModel):
     Therefor representing a transformation from
     Vector[float | int] -> float
     """
+
     pass
 
 
@@ -71,10 +73,11 @@ class ModelTrainer:
 
 TrainableType = TypeVar('TrainableType')
 
-class Trainable:
 
+class Trainable(Generic[TrainableType]):
     def train(self, model: ModelTrainer, input_features: set[str], target_feature: str) -> TrainableType:
         raise NotImplementedError()
+
 
 class TrainedDecisionTreeClassifier(TrainedClassificationModel):
 
@@ -83,7 +86,7 @@ class TrainedDecisionTreeClassifier(TrainedClassificationModel):
     def __init__(self, model: DecisionTreeClassifier, input_features: list[str]) -> None:
         self.model = model
         self.input_features = input_features
-    
+
     def classification_indicies(self) -> list[str]:
         return [str(label) for label in self.model.classes_]
 
@@ -92,9 +95,9 @@ class TrainedDecisionTreeClassifier(TrainedClassificationModel):
 
     def _predict_on_valid(self, data: DataFrame) -> Series:
         return self.model.predict(data)
-        
-class DecisionTreeClassifierTrainer(ModelTrainer):
 
+
+class DecisionTreeClassifierTrainer(ModelTrainer):
     async def train(self, data_split: TrainingDataSet) -> TrainedModel:
         model = DecisionTreeClassifier()
         model.fit(data_split.x_train, data_split.y_train)
@@ -116,7 +119,7 @@ class TrainedXGBoostModel(TrainedClassificationModel):
 
     def _predict_on_valid(self, data: DataFrame) -> Series:
         return self.model.predict(data)
-    
+
     def _predict_proba_on_valid(self, data: DataFrame) -> DataFrame:
         return self.model.predict_proba(data)
 
@@ -179,7 +182,7 @@ class XGBoostTrainer(ModelTrainer):
 
     async def train(self, data_split: TrainingDataSet) -> TrainedModel:
         if data_split.y_train.dtype not in [int, bool, str]:
-            raise Exception("Training classification model on continuse values. Maybe you want a regression model?")
+            raise Exception('Training classification model on continuse values. Maybe you want a regression model?')
         model = XGBClassifier(**self.xgboost_parmas)
         if isinstance(data_split.y_train, DataFrame):
             model.scale_pos_weight = int(

@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -36,14 +37,6 @@ class SplitStrategy:
     async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
         raise NotImplementedError()
 
-    @staticmethod
-    def ratio(ratio: float) -> RandomRatioSplitter:
-        return RandomRatioSplitter(ratio)
-
-    @staticmethod
-    def sorted_ratio(sort_key: str, ratio: float) -> SortedRatioSplitter:
-        return SortedRatioSplitter(ratio, sort_key)
-
 
 class RandomRatioSplitter(SplitStrategy):
 
@@ -57,7 +50,7 @@ class RandomRatioSplitter(SplitStrategy):
 
         train = df[:split_index]
         validate = df[split_index:]
-        
+
         return train, validate
 
 
@@ -78,15 +71,15 @@ class SortedRatioSplitter(SplitStrategy):
         train_index = sorted_index[:split_index]
         test_index = sorted_index[split_index:]
 
-        train = df.iloc[train_index]
-        validate = df.iloc[test_index]
+        train: DataFrame = df.iloc[train_index]
+        validate: DataFrame = df.iloc[test_index]
 
         return train, validate
 
 
 SplitableType = TypeVar('SplitableType')
 
-class Splitable:
 
+class Splitable(Generic[SplitableType]):
     def split(self, split_strategy: SplitStrategy) -> SplitableType:
         raise NotImplementedError()

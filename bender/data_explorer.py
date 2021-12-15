@@ -1,6 +1,8 @@
 from pandas import DataFrame
-from bender.transformation import Transformation
-from bender.importer import DataImporter
+
+from bender.data_importer.importer import DataImporter
+from bender.transformation.transformation import Transformation
+
 
 class DataExplorer:
 
@@ -11,8 +13,8 @@ class DataExplorer:
         self.importer = importer
         self.data = DataFrame()
 
-    def add(self, transformation: Transformation):
+    def add(self, transformation: Transformation) -> None:
         raise NotImplementedError()
 
-    async def import_with(self, importer: DataImporter):
+    async def import_with(self, importer: DataImporter) -> None:
         raise NotImplementedError()

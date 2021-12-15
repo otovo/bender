@@ -1,12 +1,13 @@
 from __future__ import annotations
-import datetime
+
 import logging
-from typing import Optional, TypeVar
-from databases.core import DatabaseURL
-from pandas import DataFrame
+from datetime import datetime, timedelta
+from typing import Any, Generic, Optional, TypeVar
+
 import pandas
 from databases import Database
-from datetime import datetime, timedelta
+from databases.core import DatabaseURL
+from pandas import DataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,9 @@ class DataImporter:
     def join_import(self, importer: DataImporter, join_key: str) -> DataImporter:
         return JoinedImporter(first_import=self, second_import=importer, join_key=join_key)
 
-    def cached(self, path: str, from_now: Optional[timedelta] = None, timestamp: Optional[datetime] = None) -> DataImporter:
+    def cached(
+        self, path: str, from_now: Optional[timedelta] = None, timestamp: Optional[datetime] = None
+    ) -> DataImporter:
         if timestamp:
             return CachedImporter(self, path, timestamp)
         elif from_now:
@@ -29,7 +32,8 @@ class DataImporter:
 
 DataImporterType = TypeVar('DataImporterType')
 
-class DataImportable:
+
+class DataImportable(Generic[DataImporterType]):
     def import_data(self, importer: DataImporter) -> DataImporterType:
         raise NotImplementedError()
 
@@ -46,18 +50,18 @@ class CachedImporter(DataImporter):
         self.expiration_date = expiration_date
 
     async def import_data(self) -> DataFrame:
-        expration_path = self.path + "expiration.csv"
-        file_path = self.path + ".csv"
+        expration_path = self.path + 'expiration.csv'
+        file_path = self.path + '.csv'
         try:
-            logger.info("Trying to load csv")
+            logger.info('Trying to load csv')
             saved_expiration_date = pandas.read_csv(expration_path)
-            if pandas.to_datetime(saved_expiration_date["date"].iloc[0]) < datetime.now():
-                logger.info("Refreshing source")
-                raise Exception("Out of date cache")
+            if pandas.to_datetime(saved_expiration_date['date'].iloc[0]) < datetime.now():
+                logger.info('Refreshing source')
+                raise Exception('Out of date cache')
             return pandas.read_csv(file_path)
         except Exception as error:
-            logger.info(f"Error loading file, so loading from source: {error}")
-            expiration = DataFrame({"date": [self.expiration_date]})
+            logger.info(f'Error loading file, so loading from source: {error}')
+            expiration = DataFrame({'date': [self.expiration_date]})
             df = await self.importer.import_data()
             df.to_csv(file_path)
             expiration.to_csv(expration_path)
@@ -78,9 +82,9 @@ class JoinedImporter(DataImporter):
     async def import_data(self) -> DataFrame:
         first_frame = await self.first_import.import_data()
         second_frame = await self.second_import.import_data()
-        return first_frame.join(second_frame, on=self.join_key, how="inner")
+        return first_frame.join(second_frame, on=self.join_key, how='inner')
 
-        
+
 class LiteralImporter(DataImporter):
 
     df: DataFrame
@@ -95,7 +99,7 @@ class LiteralImporter(DataImporter):
 class SqlImporter(DataImporter):
 
     query: str
-    values: Optional[dict]
+    values: Optional[dict[str, Any]]
     url: DatabaseURL
 
     def __init__(self, url: DatabaseURL, query: str, values: Optional[dict]) -> None:

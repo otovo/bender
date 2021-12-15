@@ -1,9 +1,9 @@
-from bender.factory_states import LoadedModel
-from bender.model_loader import LiteralLoader, S3ModelLoader, S3Config
-from bender.model_trainer import TrainedModel
+from bender.model_loader.model_loader import LiteralLoader, S3Config, S3ModelLoader
+from bender.pipeline.factory_states import LoadedModel
+from bender.trainer.model_trainer import TrainedModel
+
 
 class ModelLoaders:
-
     @staticmethod
     def aws_s3(file: str, config: S3Config) -> LoadedModel:
         return LoadedModel(S3ModelLoader(file, config))

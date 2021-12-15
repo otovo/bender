@@ -37,7 +37,6 @@ class PredictionOutput(StrEnum):
 
 
 class PredictionExtractor:
-
     @property
     def output(self) -> tuple[str, PredictionOutput]:
         raise NotImplementedError()
@@ -46,13 +45,21 @@ class PredictionExtractor:
     def needed_features(self) -> set[str]:
         raise NotImplementedError()
 
-    async def extract(self, output: DataFrame):
+    async def extract(self, output: DataFrame) -> None:
         raise NotImplementedError()
 
 
 PredictableType = TypeVar('PredictableType')
 
-class Predictable:
 
+class Predictable:
     def predict(self, on: Optional[Callable[[DataFrame], Series]] = None) -> PredictableType:
+        raise NotImplementedError()
+
+
+ProbPredictableType = TypeVar('ProbPredictableType')
+
+
+class ProbabilisticPredicatble:
+    def predict_proba(self, on: Optional[Callable[[DataFrame], Series]] = None) -> ProbPredictableType:
         raise NotImplementedError()

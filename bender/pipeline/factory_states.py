@@ -1,28 +1,29 @@
 from __future__ import annotations
+
 import logging
-from typing import Callable, Optional, TypeVar
-from numpy.testing import run_module_suite
+from typing import Callable, Optional
 
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
-from bender.evaluator import Evaluable, Evaluator
 
-from bender.split_strategy import SplitStrategy, Splitable, TrainingDataSet
-from bender.importer import DataImportable, DataImporter
-from bender.model_loader import ModelLoadable, ModelLoader
-from bender.model_trainer import ModelTrainer, Trainable, TrainedModel
+from bender.data_importer.importer import DataImportable, DataImporter
+from bender.evaluator.factory_method import Evaluable
+from bender.evaluator.interface import Evaluator
+from bender.model_loader.model_loader import ModelLoadable, ModelLoader
+from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput
-from bender.transformation import Processable, Transformation
+from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
+from bender.trainer.model_trainer import ModelTrainer, Trainable, TrainedModel
+from bender.transformation.transformation import Processable, Transformation
 
 logger = logging.getLogger(__name__)
 
-Output = TypeVar('Output')
 
-class RunnablePipeline:
-    async def run(self) -> Output:
-        raise NotImplementedError()
-
-class LoadedDataAndModel(Processable, Predictable, RunnablePipeline):
+class LoadedDataAndModel(
+    Processable['LoadedDataAndModel'],
+    Predictable['PredictionPipeline'],
+    RunnablePipeline[tuple[TrainedModel, DataFrame]],
+):
 
     data_loader: LoadedData
     model_loader: LoadedModel
@@ -43,11 +44,11 @@ class LoadedDataAndModel(Processable, Predictable, RunnablePipeline):
         loaded_model = await self.model_loader.run()
         return (loaded_model, processed_data)
 
-class PredictionPipeline(RunnablePipeline):
+
+class PredictionPipeline(RunnablePipeline[Series]):
 
     data_and_model: LoadedDataAndModel
     predict_on: Optional[Callable[[DataFrame], Series]]
-
 
     def __init__(self, data_and_model: LoadedDataAndModel, predict_on: Optional[Callable[[DataFrame], Series]]) -> None:
         self.data_and_model = data_and_model
@@ -64,26 +65,34 @@ class PredictionPipeline(RunnablePipeline):
 
         return model.predict(predict_on_data)
 
-class ExtractFromPredictionPipeline(RunnablePipeline):
+
+class ExtractFromPredictionPipeline(RunnablePipeline[None]):
 
     data_and_model: LoadedDataAndModel
     predict_on: Optional[Callable[[DataFrame], Series]]
     extractors: list[PredictionExtractor]
 
-
-    def __init__(self, data_and_model: LoadedDataAndModel, predict_on: Callable[[DataFrame], Series], extractors: list[PredictionExtractor]) -> None:
+    def __init__(
+        self,
+        data_and_model: LoadedDataAndModel,
+        predict_on: Callable[[DataFrame], Series],
+        extractors: list[PredictionExtractor],
+    ) -> None:
         self.data_and_model = data_and_model
         self.predict_on = predict_on
         self.extractors = extractors
 
     async def run(self) -> None:
         model, processed_data = await self.data_and_model.run()
-        predict_on_filter = self.predict_on(processed_data)
-        predict_on_data = processed_data[predict_on_filter]
+        if self.predict_on:
+            predict_on_filter = self.predict_on(processed_data)
+            predict_on_data = processed_data[predict_on_filter]
+        else:
+            predict_on_data = processed_data
 
         for extractor in self.extractors:
             output_feature, output_type = extractor.output
-            
+
             output_df = DataFrame()
             if output_type == PredictionOutput.CLASSIFICATION:
                 output_df[output_feature] = model.predict(predict_on_data)
@@ -94,11 +103,11 @@ class ExtractFromPredictionPipeline(RunnablePipeline):
 
             for needed_feature in extractor.needed_features:
                 output_df[needed_feature] = predict_on_data[needed_feature]
-            
+
             await extractor.extract(output_df)
 
 
-class LoadedModel(DataImportable, RunnablePipeline):
+class LoadedModel(DataImportable[LoadedDataAndModel], RunnablePipeline[TrainedModel]):
 
     model_loader: ModelLoader
 
@@ -112,12 +121,18 @@ class LoadedModel(DataImportable, RunnablePipeline):
         return await self.model_loader.load_model()
 
 
-class LoadedData(Processable, ModelLoadable, RunnablePipeline, Splitable, DataImporter):
+class LoadedData(
+    Processable['LoadedData'],
+    ModelLoadable[LoadedDataAndModel],
+    RunnablePipeline[DataFrame],
+    Splitable['SplitedData'],
+    DataImporter,
+):
 
     importer: DataImporter
     transformations: list[Transformation]
 
-    def __init__(self, importer: DataImporter, transformations: list[Transformation] = []) -> None:
+    def __init__(self, importer: DataImporter, transformations: list[Transformation]) -> None:
         self.importer = importer
         self.transformations = transformations
         assert isinstance(importer, DataImporter)
@@ -134,7 +149,6 @@ class LoadedData(Processable, ModelLoadable, RunnablePipeline, Splitable, DataIm
 
     async def run(self) -> DataFrame:
         logger.info('Fetching data')
-        print(self.importer)
         df = await self.importer.import_data()
         logger.info('Fetched data')
 
@@ -149,8 +163,9 @@ class LoadedData(Processable, ModelLoadable, RunnablePipeline, Splitable, DataIm
     def split(self, split_strategy: SplitStrategy) -> SplitedData:
         return SplitedData(self, split_strategy=split_strategy)
 
-class SplitedData(RunnablePipeline, Trainable):
-    
+
+class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['TrainingPipeline']):
+
     data_loader: LoadedData
     split_strategy: SplitStrategy
 
@@ -162,17 +177,20 @@ class SplitedData(RunnablePipeline, Trainable):
         raw_data = await self.data_loader.run()
         return await self.split_strategy.split(raw_data)
 
-    def train(self, model: ModelTrainer, input_features: set[str], target_feature: str) -> TrainingPipeline:
+    def train(self, model: ModelTrainer, input_features: list[str], target_feature: str) -> TrainingPipeline:
         return TrainingPipeline(self, model, input_features, target_feature)
 
-class TrainingPipeline(RunnablePipeline, Evaluable):
+
+class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable):
 
     data_loader: SplitedData
     model_trainer: ModelTrainer
-    input_features: set[str]
+    input_features: list[str]
     target_feature: str
 
-    def __init__(self, data_loader: SplitedData, model_trainer: ModelTrainer, input_features: set[str], target_feature: str) -> None:
+    def __init__(
+        self, data_loader: SplitedData, model_trainer: ModelTrainer, input_features: list[str], target_feature: str
+    ) -> None:
         self.data_loader = data_loader
         self.model_trainer = model_trainer
         self.input_features = input_features
@@ -189,7 +207,8 @@ class TrainingPipeline(RunnablePipeline, Evaluable):
     def evaluate(self, evaluators: list[Evaluator]) -> TrainAndEvaluatePipeline:
         return TrainAndEvaluatePipeline(self, evaluators)
 
-class TrainAndEvaluatePipeline(RunnablePipeline):
+
+class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel]):
 
     trainer: TrainingPipeline
     evaluators: list[Evaluator]

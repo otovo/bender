@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "c3po"
+name = "bender"
 version = "0.1.0"
 description = "A packge that makes ML processes easier, faster and less error prone"
 authors = ["Mats E. Mollestad <mats@mollestad.no>"]
@@ -26,3 +26,23 @@ pytest-asyncio = "^0.16.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    'if TYPE_CHECKING:',
+    'pragma: no cover',
+    "if __name__ == '__main__':",
+]

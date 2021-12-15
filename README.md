@@ -8,7 +8,7 @@ Bender will make your machine learning processes, faster, safer, simpler while a
 
 ## Pipeline Safety
 
-The whole pipeline is build using generics from Python's typing system. Resulting in an improved developer experience, as the compiler can know if your pipeline's logic makes sense before it has started. 
+The whole pipeline is build using generics from Python's typing system. Resulting in an improved developer experience, as the compiler can know if your pipeline's logic makes sense before it has started.
 
 Bender will therefore make sure you **can't** make errors like
 
@@ -39,18 +39,18 @@ DataImporters
         Transformations.unpack_json("purchases", key="price", output_feature="price", policy=UnpackPolicy.median_number())
 
         Transformations.log_normal_shift("y_values", "y_log"),
-        
+
         # Get date values from a date feature
         Transformations.date_component("month", "date", output_feature="month_value"),
     ])
 
     # Split 70 / 30% for train and test set
     .split(SplitStrategies.ratio(0.7))
-    
+
     # Train a XGBoosted Tree model
     .train(
-        ModelTrainer.xgboost(), 
-        input_features=['y_log', 'price', 'month_value', 'country', ...], 
+        ModelTrainer.xgboost(),
+        input_features=['y_log', 'price', 'month_value', 'country', ...],
         target_feature='did_buy_product_x'
     )
 

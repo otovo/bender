@@ -1,56 +1,34 @@
-from pandas.core.frame import DataFrame, Series
-from bender.evaluators import Evaluators
-from bender.importer import DataImporter
-from bender.importers import DataImporters
-
-import pytest
 import numpy as np
-from numpy.testing import assert_almost_equal
+import pytest
+from pandas.core.frame import DataFrame
+
+from bender.importers import DataImporters
 from bender.model_loaders import ModelLoaders
-from bender.model_trainer import DecisionTreeClassifierTrainer, ModelTrainer
-from bender.split_strategy import SplitStrategy
-from bender.transformation import UnpackPolicy
-
-from bender.transformations import Transformations
-
-from sklearn.tree import DecisionTreeClassifier
+from bender.split_strategy.split_strategy import SplitStrategy
+from bender.trainer.model_trainer import DecisionTreeClassifierTrainer
 
 pytestmark = pytest.mark.asyncio
 
 
-async def test_predict_data():
+async def test_predict_data() -> None:
 
     model = await (
-        DataImporters.literal(
-            DataFrame({
-                'x': [0, 1],
-                'y': [0, 1],
-                'output': [0, 1]
-            })
-        )
+        DataImporters.literal(DataFrame({'x': [0, 1], 'y': [0, 1], 'output': [0, 1]}))
         # No test set
         .split(SplitStrategy.ratio(1))
         .train(DecisionTreeClassifierTrainer(), input_features=['x', 'y'], target_feature='output')
         .run()
     )
 
-    test_data = DataFrame({
-        'x': [2, -3, 4],
-        'y': [2, -3, 4]
-    })
+    test_data = DataFrame({'x': [2, -3, 4], 'y': [2, -3, 4]})
     expected = [1, 0, 1]
-    result = await (
-        ModelLoaders.literal(model)
-            .import_data(DataImporters.literal(test_data))
-            .predict()
-            .run()
-    )
+    result = await (ModelLoaders.literal(model).import_data(DataImporters.literal(test_data)).predict().run())
 
     assert np.all(expected == result)
-    
+
     """
     Supervised Regression
-    
+
     Vector[float] -> float
 
     .train(
@@ -62,7 +40,7 @@ async def test_predict_data():
 
     """
     Supervised Classification
-    
+
     Vector[float / int / bool / str] -> str / bool / int
 
     .train(
