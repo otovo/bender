@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class LoadedDataAndModel(
     Processable,
-    Predictable['PredictionPipeline'],
+    Predictable,
     RunnablePipeline[tuple[TrainedModel, DataFrame]],
 ):
 
@@ -123,10 +123,10 @@ class LoadedModel(DataImportable[LoadedDataAndModel], RunnablePipeline[TrainedMo
 
 
 class LoadedData(
-    Processable['LoadedData'],
+    Processable,
     ModelLoadable[LoadedDataAndModel],
     RunnablePipeline[DataFrame],
-    Splitable['SplitedData'],
+    Splitable,
     DataImporter,
 ):
 
