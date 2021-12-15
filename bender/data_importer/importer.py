@@ -102,7 +102,7 @@ class SqlImporter(DataImporter):
     values: Optional[dict[str, Any]]
     url: DatabaseURL
 
-    def __init__(self, url: DatabaseURL, query: str, values: Optional[dict]) -> None:
+    def __init__(self, url: DatabaseURL, query: str, values: Optional[dict[str, Any]]) -> None:
         self.query = query
         self.url = url
         self.values = values

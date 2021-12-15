@@ -3,6 +3,7 @@ from typing import Callable, Optional
 from pandas import DataFrame, Series
 
 from bender.transformation.transformation import (
+    BinaryTransform,
     DateComponent,
     LogNormalDistributionShift,
     NeighbourDistance,
@@ -34,3 +35,7 @@ class Transformations:
         to: Optional[Callable[[DataFrame], Series]] = None,
     ) -> NeighbourDistance:
         return NeighbourDistance(number_of_neighbours, latitude, longitude, to)
+
+    @staticmethod
+    def binary(output_feature: str, lambda_function: Callable[[DataFrame], Series]) -> BinaryTransform:
+        return BinaryTransform(output_feature, lambda_function)

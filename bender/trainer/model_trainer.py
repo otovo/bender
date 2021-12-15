@@ -124,7 +124,7 @@ class TrainedXGBoostModel(TrainedClassificationModel):
         return self.model.predict_proba(data)
 
     def loss(self, data: DataFrame) -> float:
-        return self.model.evals_result()['validation_0']['logloss'][-1]
+        return self.model.evals_result()['validation_0']['logloss'][-1]  # type: ignore
 
     def estimator(self) -> Pipeline:
         return self.model
@@ -154,17 +154,17 @@ class XGBoostTrainer(ModelTrainer):
 
     def __init__(
         self,
-        use_label_encoder=False,
-        learning_rate=0.01,
-        max_depth=5,
-        n_estimators=400,
-        verbosity=0,
-        scale_pos_weight=1.0,
-        gamma=0,
-        min_child_weight=1,
-        colsample_bytree=1,
-        reg_lambda=1,
-        alpha=0,
+        use_label_encoder: bool = False,
+        learning_rate: float = 0.01,
+        max_depth: int = 5,
+        n_estimators: int = 400,
+        verbosity: float = 0,
+        scale_pos_weight: float = 1.0,
+        gamma: float = 0,
+        min_child_weight: float = 1,
+        colsample_bytree: float = 1,
+        reg_lambda: float = 1,
+        alpha: float = 0,
     ) -> None:
         self.xgboost_parmas = {
             'use_label_encoder': use_label_encoder,

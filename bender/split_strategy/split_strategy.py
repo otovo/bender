@@ -66,7 +66,10 @@ class SortedRatioSplitter(SplitStrategy):
     async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
         split_index = int(len(df) * self.ratio)
         dates = df[self.sort_key]
-        sorted_index = [x for _, x in sorted(zip(np.array(dates), np.arange(0, len(dates))), key=lambda pair: pair[0])]
+        sorted_index = [
+            x
+            for _, x in sorted(zip(np.array(dates), np.arange(0, len(dates))), key=lambda pair: pair[0])  # type: ignore
+        ]
 
         train_index = sorted_index[:split_index]
         test_index = sorted_index[split_index:]

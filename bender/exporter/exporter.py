@@ -61,7 +61,7 @@ class LocalDiskExporter(Exporter):
 
 class MemoryExporter(Exporter):
     async def store_figure(self, figure: Figure) -> None:
-        if isinstance(figure, PltFigure) or isinstance(figure, PlotFigure):
+        if isinstance(figure, (PlotFigure, PltFigure)):
             plt.show()
         else:
             raise NotImplementedError()
