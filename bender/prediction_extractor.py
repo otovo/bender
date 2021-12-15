@@ -23,10 +23,10 @@ class BaseEnum(Enum, metaclass=MetaEnum):
 
 class StrEnum(str, BaseEnum):
     def __str__(self) -> str:
-        return self.value
+        return self.value  # type: ignore
 
     @classmethod
-    def choices(cls) -> list:
+    def choices(cls) -> list['StrEnum']:
         return list(cls)
 
 

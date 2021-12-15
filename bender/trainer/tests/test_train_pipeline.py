@@ -5,7 +5,7 @@ from pandas.core.frame import DataFrame
 from bender.evaluators import Evaluators
 from bender.exporter.exporter import Exporter
 from bender.importers import DataImporters
-from bender.split_strategy.split_strategy import SplitStrategy
+from bender.split_strategies import SplitStrategies
 from bender.trainer.model_trainer import TrainedXGBoostModel, XGBoostTrainer
 from bender.transformation.transformation import BinaryTransform
 from bender.transformations import Transformations
@@ -13,7 +13,7 @@ from bender.transformations import Transformations
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore
 def input_data() -> DataFrame:
     values = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4], dtype=float)
     return DataFrame(
@@ -37,7 +37,7 @@ def input_data() -> DataFrame:
     )
 
 
-async def test_train_pipeline(input_data) -> None:
+async def test_train_pipeline(input_data: DataFrame) -> None:
 
     pipeline = (
         DataImporters.literal(input_data)
@@ -51,13 +51,13 @@ async def test_train_pipeline(input_data) -> None:
                 BinaryTransform('target', lambda df: df['y_values'] > 2),
             ]
         )
-        .split(SplitStrategy.ratio(0.7))
+        .split(SplitStrategies.ratio(0.7))
         .train(XGBoostTrainer(), input_features=['x_values', 'day_value', 'month_value'], target_feature='target')
         .evaluate(
             [
-                Evaluators.roc_curve(Exporter.disk('tests/train-evaluation-roc.png')),
-                Evaluators.confusion_matrix(Exporter.disk('tests/train-evaluation-matrix.png')),
-                Evaluators.precision_recall(Exporter.disk('tests/train-evaluation-prec-recall.png')),
+                Evaluators.roc_curve(Exporter.disk('test-exports/train-evaluation-roc.png')),
+                Evaluators.confusion_matrix(Exporter.disk('test-exports/train-evaluation-matrix.png')),
+                Evaluators.precision_recall(Exporter.disk('test-exports/train-evaluation-prec-recall.png')),
             ]
         )
     )

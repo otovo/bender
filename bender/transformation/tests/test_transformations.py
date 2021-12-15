@@ -11,7 +11,7 @@ from bender.transformations import Transformations
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore
 def json_df() -> DataFrame:
     return DataFrame(
         {
@@ -29,7 +29,7 @@ def json_df() -> DataFrame:
     ).copy()
 
 
-@pytest.fixture
+@pytest.fixture  # type: ignore
 def input_data() -> DataFrame:
     values = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4], dtype=float)
     return DataFrame(
@@ -55,7 +55,7 @@ def input_data() -> DataFrame:
     )
 
 
-async def test_training_pipeline(input_data) -> None:
+async def test_training_pipeline(input_data: DataFrame) -> None:
 
     pipeline = DataImporters.literal(input_data).process(
         [
@@ -96,7 +96,7 @@ async def test_unpack_json_max(json_df: DataFrame) -> None:
 
 
 async def test_date_component_handle_object_type() -> None:
-    input_data = pd.read_csv('tests/test.csv')
+    input_data = pd.read_csv('test-data/dates.csv')
     result = await Transformations.date_component('day', 'date', 'day_value').transform(input_data)
     assert np.all(result['expected_day'] == result['day_value'])
 

@@ -3,7 +3,7 @@ from typing import Any, Optional
 from pandas import DataFrame
 
 from bender.data_importer.importer import LiteralImporter, SqlImporter
-from bender.pipeline.factory_states import LoadedData
+from bender.pipeline.factory_states import LoadedData  # type: ignore
 
 
 class DataImporters:

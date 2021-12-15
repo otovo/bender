@@ -1,0 +1,76 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: "${{ github.head_ref }} or main"
+  cancel-in-progress: true
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/cache@v2
+        id: cache-venv
+        with:
+          path: .venv
+          key: venv-0  # increment to reset
+      - run: |
+          python -m venv .venv --upgrade-deps
+          source .venv/bin/activate
+          pip install pre-commit
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+      - uses: actions/cache@v2
+        id: pre-commit-cache
+        with:
+          path: ~/.cache/pre-commit
+          key: key-0
+      - run: |
+          source .venv/bin/activate
+          pre-commit run --all-files
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - uses: actions/cache@v2
+        id: poetry-cache
+        with:
+          path: ~/.local
+          key: key-7
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: false
+          version: 1.2.0a2
+      - uses: actions/cache@v2
+        id: cache-venv
+        with:
+          path: .venv
+          key: ${{ hashFiles('**/poetry.lock') }}-10
+      - run: |
+          python -m venv .venv --upgrade-deps
+          source .venv/bin/activate
+          poetry install --no-interaction --no-root
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest --cov-report=xml
+          coverage report
+      - uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}

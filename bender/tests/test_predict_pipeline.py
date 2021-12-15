@@ -4,7 +4,7 @@ from pandas.core.frame import DataFrame
 
 from bender.importers import DataImporters
 from bender.model_loaders import ModelLoaders
-from bender.split_strategy.split_strategy import SplitStrategy
+from bender.split_strategies import SplitStrategies
 from bender.trainer.model_trainer import DecisionTreeClassifierTrainer
 
 pytestmark = pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_predict_data() -> None:
     model = await (
         DataImporters.literal(DataFrame({'x': [0, 1], 'y': [0, 1], 'output': [0, 1]}))
         # No test set
-        .split(SplitStrategy.ratio(1))
+        .split(SplitStrategies.ratio(1))
         .train(DecisionTreeClassifierTrainer(), input_features=['x', 'y'], target_feature='output')
         .run()
     )

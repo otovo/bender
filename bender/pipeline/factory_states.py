@@ -1,3 +1,4 @@
+# type: ignore[misc]
 from __future__ import annotations
 
 import logging
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class LoadedDataAndModel(
-    Processable['LoadedDataAndModel'],
+    Processable,
     Predictable['PredictionPipeline'],
     RunnablePipeline[tuple[TrainedModel, DataFrame]],
 ):
@@ -181,7 +182,25 @@ class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['Trai
         return TrainingPipeline(self, model, input_features, target_feature)
 
 
-class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable):
+class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel]):
+
+    trainer: TrainingPipeline
+    evaluators: list[Evaluator]
+
+    def __init__(self, trainer: TrainingPipeline, evaluators: list[Evaluator]) -> None:
+        self.trainer = trainer
+        self.evaluators = evaluators
+
+    async def run(self) -> TrainedModel:
+        train_set = await self.trainer._training_set()
+        # Sub optimal call
+        model = await self.trainer.model_trainer.train(train_set)
+        for evaluator in self.evaluators:
+            await evaluator.evaluate(model, train_set)
+        return model
+
+
+class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable[TrainAndEvaluatePipeline]):
 
     data_loader: SplitedData
     model_trainer: ModelTrainer
@@ -206,21 +225,3 @@ class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable):
 
     def evaluate(self, evaluators: list[Evaluator]) -> TrainAndEvaluatePipeline:
         return TrainAndEvaluatePipeline(self, evaluators)
-
-
-class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel]):
-
-    trainer: TrainingPipeline
-    evaluators: list[Evaluator]
-
-    def __init__(self, trainer: TrainingPipeline, evaluators: list[Evaluator]) -> None:
-        self.trainer = trainer
-        self.evaluators = evaluators
-
-    async def run(self) -> TrainedModel:
-        train_set = await self.trainer._training_set()
-        # Sub optimal call
-        model = await self.trainer.model_trainer.train(train_set)
-        for evaluator in self.evaluators:
-            await evaluator.evaluate(model, train_set)
-        return model
