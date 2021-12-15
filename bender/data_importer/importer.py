@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
 
 import pandas
@@ -15,19 +15,6 @@ logger = logging.getLogger(__name__)
 class DataImporter:
     async def import_data(self) -> DataFrame:
         raise NotImplementedError()
-
-    def join_import(self, importer: DataImporter, join_key: str) -> DataImporter:
-        return JoinedImporter(first_import=self, second_import=importer, join_key=join_key)
-
-    def cached(
-        self, path: str, from_now: Optional[timedelta] = None, timestamp: Optional[datetime] = None
-    ) -> DataImporter:
-        if timestamp:
-            return CachedImporter(self, path, timestamp)
-        elif from_now:
-            return CachedImporter(self, path, datetime.now() + from_now)
-        else:
-            return CachedImporter(self, path, datetime.now() + timedelta(days=1))
 
 
 DataImporterType = TypeVar('DataImporterType')

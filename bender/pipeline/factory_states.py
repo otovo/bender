@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta
 from typing import Callable, Optional
 
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from bender.data_importer.importer import DataImportable, DataImporter
+from bender.data_importer.importer import CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
 from bender.model_loader.model_loader import ModelLoadable, ModelLoader
@@ -163,6 +164,23 @@ class LoadedData(
 
     def split(self, split_strategy: SplitStrategy) -> SplitedData:
         return SplitedData(self, split_strategy=split_strategy)
+
+    def join_import(self, importer: DataImporter, join_key: str) -> LoadedData:
+        return LoadedData(
+            JoinedImporter(first_import=self.importer, second_import=importer, join_key=join_key), self.transformations
+        )
+
+    def cached(
+        self, path: str, from_now: Optional[timedelta] = None, timestamp: Optional[datetime] = None
+    ) -> LoadedData:
+        importer: CachedImporter
+        if timestamp:
+            importer = CachedImporter(self.importer, path, timestamp)
+        elif from_now:
+            importer = CachedImporter(self.importer, path, datetime.now() + from_now)
+        else:
+            importer = CachedImporter(self.importer, path, datetime.now() + timedelta(days=1))
+        return LoadedData(importer, self.transformations)
 
 
 class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['TrainingPipeline']):
