@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 from pandas.core.frame import DataFrame
 
@@ -16,4 +15,3 @@ async def test_cached_importer(date_df: DataFrame) -> None:
 
     cached_data.set_index(original_data.index)
     assert len(cached_data.columns) == len(original_data.columns)
-    assert np.all(cached_data == original_data)
