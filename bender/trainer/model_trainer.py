@@ -96,6 +96,14 @@ class TrainedDecisionTreeClassifier(TrainedClassificationModel):
     def _predict_on_valid(self, data: DataFrame) -> Series:
         return self.model.predict(data)
 
+    def to_json(self) -> str:
+        # print("Printing tree")
+        # object = self.model.tree_
+        # methods = [method_name for method_name in dir(object) if callable(getattr(object, method_name))]
+        # print(methods)
+        # print(object.decision_path(np.array([[0, 1]], dtype=np.float32)))
+        return ''
+
 
 class DecisionTreeClassifierTrainer(ModelTrainer):
     async def train(self, data_split: TrainingDataSet) -> TrainedModel:

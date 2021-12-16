@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 from pandas import DataFrame
@@ -45,3 +47,9 @@ def json_df() -> DataFrame:
             'value_max': [4, 1],
         }
     ).copy()
+
+
+test_exports_path = 'test-exports'
+
+if not os.path.isdir(test_exports_path):
+    os.mkdir(test_exports_path)

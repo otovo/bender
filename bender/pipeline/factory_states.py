@@ -11,6 +11,8 @@ from pandas.core.series import Series
 from bender.data_importer.importer import CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
+from bender.model_exporter.factory import ModelExportable
+from bender.model_exporter.interface import ModelExporter
 from bender.model_loader.model_loader import ModelLoadable, ModelLoader
 from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput
@@ -200,7 +202,21 @@ class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['Trai
         return TrainingPipeline(self, model, input_features, target_feature)
 
 
-class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel]):
+class ExportTrainedModel(RunnablePipeline[None]):
+
+    pipeline: RunnablePipeline[TrainedModel]
+    exporter: ModelExporter
+
+    def __init__(self, pipeline: RunnablePipeline[TrainedModel], exporter: ModelExporter) -> None:
+        self.pipeline = pipeline
+        self.exporter = exporter
+
+    async def run(self) -> None:
+        model = await self.pipeline.run()
+        await self.exporter.export(model)
+
+
+class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel], ModelExportable[ExportTrainedModel]):
 
     trainer: TrainingPipeline
     evaluators: list[Evaluator]
@@ -217,8 +233,13 @@ class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel]):
             await evaluator.evaluate(model, train_set)
         return model
 
+    def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
+        return ExportTrainedModel(self, exporter)
 
-class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable[TrainAndEvaluatePipeline]):
+
+class TrainingPipeline(
+    RunnablePipeline[TrainedModel], Evaluable[TrainAndEvaluatePipeline], ModelExportable[ExportTrainedModel]
+):
 
     data_loader: SplitedData
     model_trainer: ModelTrainer
@@ -243,3 +264,6 @@ class TrainingPipeline(RunnablePipeline[TrainedModel], Evaluable[TrainAndEvaluat
 
     def evaluate(self, evaluators: list[Evaluator]) -> TrainAndEvaluatePipeline:
         return TrainAndEvaluatePipeline(self, evaluators)
+
+    def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
+        return ExportTrainedModel(self, exporter)
