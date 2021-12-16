@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -59,5 +61,11 @@ async def test_date_component_handle_object_type() -> None:
 
 async def test_date_component_handle_str_type(date_df: DataFrame) -> None:
     date_df['date'] = date_df['date'].astype(str)
+    result = await Transformations.date_component('day', 'date', 'day_value').transform(date_df)
+    assert np.all(result['expected_day'] == result['day_value'])
+
+
+async def test_date_component_handle_datetime_type(date_df: DataFrame) -> None:
+    date_df['date'] = date_df['date'].apply(lambda date: datetime.fromisoformat(date))
     result = await Transformations.date_component('day', 'date', 'day_value').transform(date_df)
     assert np.all(result['expected_day'] == result['day_value'])

@@ -125,6 +125,9 @@ class TrainedXGBoostModel(TrainedClassificationModel):
         self.model = model
         self.used_features = used_features
 
+    def classification_indicies(self) -> list[str]:
+        return [str(name) for name in self.model.classes_]
+
     def _predict_on_valid(self, data: DataFrame) -> Series:
         return self.model.predict(data)
 

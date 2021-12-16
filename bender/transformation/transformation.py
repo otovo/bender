@@ -5,7 +5,7 @@ from typing import Any, Callable, Generic, Optional, TypeVar
 
 import numpy as np
 import pandas as pd
-from numpy import log1p, log2
+from numpy import datetime64, log1p, log2
 from pandas import DataFrame
 from pandas.core.groupby.generic import SeriesGroupBy
 from pandas.core.series import Series
@@ -126,6 +126,7 @@ class LogNormalDistributionShift(Transformation):
 
 
 class DateComponent(Transformation):
+    # ValueError: Tz-aware datetime.datetime cannot be converted to datetime64 unless utc=True
 
     input_feature: str
     output_feature: str
@@ -141,9 +142,8 @@ class DateComponent(Transformation):
             self.output_feature = f'{self.input_feature}_{component}'
 
     async def transform(self, df: DataFrame) -> DataFrame:
-        # if df[self.input_feature].dtype not in [datetime, datetime64, pd.Timestamp]:
-        df[self.input_feature] = pd.to_datetime(df[self.input_feature], infer_datetime_format=True)
-        logger.info(f'dtype for {self.input_feature}: {df[self.input_feature].dtype}')
+        if df[self.input_feature].dtype != datetime64 or pd.Timestamp:
+            df[self.input_feature] = pd.to_datetime(df[self.input_feature], infer_datetime_format=True, utc=True)
         df[self.output_feature] = getattr(df[self.input_feature].dt, self.component)
         return df
 
