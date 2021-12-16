@@ -50,7 +50,7 @@ class CachedImporter(DataImporter):
             logger.info(f'Error loading file, so loading from source: {error}')
             expiration = DataFrame({'date': [self.expiration_date]})
             df = await self.importer.import_data()
-            df.to_csv(file_path)
+            df.to_csv(file_path, index=False)
             expiration.to_csv(expration_path)
             return df
 
