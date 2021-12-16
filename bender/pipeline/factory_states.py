@@ -8,7 +8,7 @@ from typing import Callable, Optional
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
-from bender.data_importer.importer import CachedImporter, DataImportable, DataImporter, JoinedImporter
+from bender.data_importer.importer import AppendImporter, CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
 from bender.model_exporter.factory import ModelExportable
@@ -183,6 +183,18 @@ class LoadedData(
         else:
             importer = CachedImporter(self.importer, path, datetime.now() + timedelta(days=1))
         return LoadedData(importer, self.transformations)
+
+    def append(self, importer: LoadedData) -> LoadedData:
+        """Append two differnet data importers.
+        This can be usefull when you have different types of data, but with the same features
+
+        Args:
+            importer (DataImporter): The data to append
+
+        Returns:
+            DataImporter: A Importer that appends the multiple importers
+        """
+        return LoadedData(AppendImporter(self.importer, importer), self.transformations)
 
 
 class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['TrainingPipeline']):

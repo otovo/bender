@@ -55,6 +55,21 @@ class CachedImporter(DataImporter):
             return df
 
 
+class AppendImporter(DataImporter):
+
+    first_importer: DataImporter
+    second_importer: DataImporter
+
+    def __init__(self, first_importer: DataImporter, second_importer: DataImporter) -> None:
+        self.first_importer = first_importer
+        self.second_importer = second_importer
+
+    async def import_data(self) -> DataFrame:
+        first = await self.first_importer.import_data()
+        second = await self.second_importer.import_data()
+        return first.append(second)
+
+
 class JoinedImporter(DataImporter):
 
     first_import: DataImporter
