@@ -202,43 +202,74 @@ class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['Trai
         return TrainingPipeline(self, model, input_features, target_feature)
 
 
-class ExportTrainedModel(RunnablePipeline[None]):
+class ValidationLoss(RunnablePipeline[float]):
 
-    pipeline: RunnablePipeline[TrainedModel]
+    pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
+
+    def __init__(self, pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]) -> None:
+        self.pipeline = pipeline
+
+    async def run(self) -> float:
+        model, data_set = await self.pipeline.run()
+        return 0
+
+
+class LossValidatable:
+    def loss(self) -> ValidationLoss:
+        raise NotImplementedError()
+
+
+class ExportTrainedModel(RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], LossValidatable):
+
+    pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
     exporter: ModelExporter
 
-    def __init__(self, pipeline: RunnablePipeline[TrainedModel], exporter: ModelExporter) -> None:
+    def __init__(
+        self, pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], exporter: ModelExporter
+    ) -> None:
         self.pipeline = pipeline
         self.exporter = exporter
 
-    async def run(self) -> None:
-        model = await self.pipeline.run()
+    async def run(self) -> tuple[TrainedModel, TrainingDataSet]:
+        model, data_set = await self.pipeline.run()
         await self.exporter.export(model)
+        return model, data_set
+
+    def loss(self) -> ValidationLoss:
+        return ValidationLoss(self)
 
 
-class TrainAndEvaluatePipeline(RunnablePipeline[TrainedModel], ModelExportable[ExportTrainedModel]):
+class TrainAndEvaluatePipeline(
+    RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], ModelExportable[ExportTrainedModel], LossValidatable
+):
 
-    trainer: TrainingPipeline
+    pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
     evaluators: list[Evaluator]
 
-    def __init__(self, trainer: TrainingPipeline, evaluators: list[Evaluator]) -> None:
-        self.trainer = trainer
+    def __init__(
+        self, pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], evaluators: list[Evaluator]
+    ) -> None:
+        self.pipeline = pipeline
         self.evaluators = evaluators
 
-    async def run(self) -> TrainedModel:
-        train_set = await self.trainer._training_set()
-        # Sub optimal call
-        model = await self.trainer.model_trainer.train(train_set)
+    async def run(self) -> tuple[TrainedModel, TrainingDataSet]:
+        model, train_set = await self.pipeline.run()
         for evaluator in self.evaluators:
             await evaluator.evaluate(model, train_set)
-        return model
+        return model, train_set
 
     def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
         return ExportTrainedModel(self, exporter)
 
+    def loss(self) -> ValidationLoss:
+        return ValidationLoss(self)
+
 
 class TrainingPipeline(
-    RunnablePipeline[TrainedModel], Evaluable[TrainAndEvaluatePipeline], ModelExportable[ExportTrainedModel]
+    RunnablePipeline[tuple[TrainedModel, TrainingDataSet]],
+    Evaluable[TrainAndEvaluatePipeline],
+    ModelExportable[ExportTrainedModel],
+    LossValidatable,
 ):
 
     data_loader: SplitedData
@@ -258,12 +289,16 @@ class TrainingPipeline(
         test_data, validation_data = await self.data_loader.run()
         return TrainingDataSet(self.input_features, self.target_feature, test_data, validation_data)
 
-    async def run(self) -> TrainedModel:
+    async def run(self) -> tuple[TrainedModel, TrainingDataSet]:
         train_set = await self._training_set()
-        return await self.model_trainer.train(train_set)
+        model = await self.model_trainer.train(train_set)
+        return model, train_set
 
     def evaluate(self, evaluators: list[Evaluator]) -> TrainAndEvaluatePipeline:
         return TrainAndEvaluatePipeline(self, evaluators)
 
     def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
         return ExportTrainedModel(self, exporter)
+
+    def loss(self) -> ValidationLoss:
+        return ValidationLoss(self)

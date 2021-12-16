@@ -12,7 +12,7 @@ pytestmark = pytest.mark.asyncio
 
 async def test_predict_data() -> None:
 
-    model = await (
+    model, data_set = await (
         DataImporters.literal(DataFrame({'x': [0, 1], 'y': [0, 1], 'output': [0, 1]}))
         # No test set
         .split(SplitStrategies.ratio(1))

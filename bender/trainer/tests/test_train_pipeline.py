@@ -36,5 +36,5 @@ async def test_train_pipeline(date_df: DataFrame) -> None:
             ]
         )
     )
-    model = await pipeline.run()
+    model, _ = await pipeline.run()
     assert isinstance(model, TrainedXGBoostModel)

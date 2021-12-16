@@ -14,5 +14,6 @@ async def test_cached_importer(date_df: DataFrame) -> None:
     original_data = await DataImporters.literal(date_df).cached(cache_path).process(processing).run()
     cached_data = await DataImporters.literal(DataFrame({})).cached(cache_path).process(processing).run()
 
+    cached_data.index = original_data.index
     assert len(cached_data.columns) == len(original_data.columns)
     assert np.all(cached_data == original_data)
