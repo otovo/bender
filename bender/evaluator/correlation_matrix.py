@@ -7,7 +7,7 @@ import seaborn as sns
 from bender.evaluator.interface import Evaluator
 from bender.exporter.exporter import Exporter
 from bender.split_strategy.split_strategy import TrainingDataSet
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 logger = logging.getLogger(__name__)
 

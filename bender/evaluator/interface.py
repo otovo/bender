@@ -1,5 +1,5 @@
 from bender.split_strategy.split_strategy import TrainingDataSet
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 
 class Evaluator:

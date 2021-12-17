@@ -4,7 +4,8 @@ from xgboost import plot_importance
 from bender.evaluator.interface import Evaluator
 from bender.exporter.exporter import Exporter
 from bender.split_strategy.split_strategy import TrainingDataSet
-from bender.trainer.model_trainer import TrainedModel, TrainedXGBoostModel
+from bender.trained_model.interface import TrainedModel
+from bender.trained_model.xgboosted_tree import TrainedXGBoostModel
 
 
 class XGBoostFeatureImportance(Evaluator):
@@ -15,7 +16,7 @@ class XGBoostFeatureImportance(Evaluator):
         self.exporter = exporter
 
     async def evaluate(self, model: TrainedModel, data_set: TrainingDataSet) -> None:
-        if isinstance(model, TrainedXGBoostModel) is False:
+        if not isinstance(model, TrainedXGBoostModel):
             raise Exception('Only supporting feature importance for XGBoost models')
 
         fig, ax = plt.subplots(1, 1, figsize=(20, 10))

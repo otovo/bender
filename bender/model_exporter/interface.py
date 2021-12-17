@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 
 class ModelExporter:

@@ -1,6 +1,6 @@
 from bender.model_loader.model_loader import LiteralLoader, S3Config, S3ModelLoader
 from bender.pipeline.factory_states import LoadedModel  # type: ignore
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 
 class ModelLoaders:

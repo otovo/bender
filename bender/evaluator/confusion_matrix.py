@@ -3,7 +3,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from bender.evaluator.interface import Evaluator
 from bender.exporter.exporter import Exporter
 from bender.split_strategy.split_strategy import TrainingDataSet
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedEstimatorModel, TrainedModel
 
 
 class ConfusionMatrix(Evaluator):
@@ -14,6 +14,8 @@ class ConfusionMatrix(Evaluator):
         self.exporter = exporter
 
     async def evaluate(self, model: TrainedModel, data_set: TrainingDataSet) -> None:
+        if not isinstance(model, TrainedEstimatorModel):
+            return
         display = ConfusionMatrixDisplay.from_estimator(
             model.estimator(), data_set.x_validate, data_set.y_validate.astype(float)
         )

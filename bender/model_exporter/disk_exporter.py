@@ -1,5 +1,5 @@
 from bender.model_exporter.interface import ModelExporter
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 
 class DiskExporter(ModelExporter):

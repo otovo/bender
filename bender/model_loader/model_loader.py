@@ -7,7 +7,8 @@ from typing import Any, Generic, TypeVar
 from aioaws.s3 import S3Client, S3Config
 from httpx import AsyncClient
 
-from bender.trainer.model_trainer import TrainedModel, TrainedXGBoostModel
+from bender.trained_model.interface import TrainedModel
+from bender.trained_model.xgboosted_tree import TrainedXGBoostModel
 
 logger = logging.getLogger(__name__)
 

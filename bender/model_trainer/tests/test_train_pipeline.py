@@ -4,8 +4,9 @@ from pandas.core.frame import DataFrame
 from bender.evaluators import Evaluators
 from bender.exporter.exporter import Exporter
 from bender.importers import DataImporters
+from bender.model_trainer.xgboosted_tree import XGBoostTrainer
 from bender.split_strategies import SplitStrategies
-from bender.trainer.model_trainer import TrainedXGBoostModel, XGBoostTrainer
+from bender.trained_model.xgboosted_tree import TrainedXGBoostModel
 from bender.transformation.transformation import BinaryTransform
 from bender.transformations import Transformations
 

@@ -4,8 +4,8 @@ from pandas.core.frame import DataFrame
 
 from bender.importers import DataImporters
 from bender.model_loaders import ModelLoaders
+from bender.model_trainer.decision_tree import DecisionTreeClassifierTrainer
 from bender.split_strategies import SplitStrategies
-from bender.trainer.model_trainer import DecisionTreeClassifierTrainer
 
 pytestmark = pytest.mark.asyncio
 

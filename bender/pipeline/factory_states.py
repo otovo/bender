@@ -14,10 +14,11 @@ from bender.evaluator.interface import Evaluator
 from bender.model_exporter.factory import ModelExportable
 from bender.model_exporter.interface import ModelExporter
 from bender.model_loader.model_loader import ModelLoadable, ModelLoader
+from bender.model_trainer.interface import ModelTrainer, Trainable
 from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput
 from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
-from bender.trainer.model_trainer import ModelTrainer, Trainable, TrainedModel
+from bender.trained_model.interface import TrainedModel
 from bender.transformation.transformation import Processable, Transformation
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ class ExtractFromPredictionPipeline(RunnablePipeline[None]):
             await extractor.extract(output_df)
 
 
-class LoadedModel(DataImportable[LoadedDataAndModel], RunnablePipeline[TrainedModel]):
+class LoadedModel(DataImportable[LoadedDataAndModel], RunnablePipeline[TrainedModel], ModelLoader):
 
     model_loader: ModelLoader
 
@@ -120,6 +121,9 @@ class LoadedModel(DataImportable[LoadedDataAndModel], RunnablePipeline[TrainedMo
 
     def import_data(self, importer: DataImporter) -> LoadedDataAndModel:
         return LoadedDataAndModel(importer, self)
+
+    async def load_model(self) -> TrainedModel:
+        return await self.run()
 
     async def run(self) -> TrainedModel:
         return await self.model_loader.load_model()

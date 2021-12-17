@@ -2,7 +2,7 @@ from aioaws.s3 import S3Client, S3Config
 from httpx import AsyncClient
 
 from bender.model_exporter.interface import ModelExporter
-from bender.trainer.model_trainer import TrainedModel
+from bender.trained_model.interface import TrainedModel
 
 
 class AwsS3ModelExporter(ModelExporter):
@@ -17,6 +17,6 @@ class AwsS3ModelExporter(ModelExporter):
     async def export(self, model: TrainedModel) -> None:
         async with AsyncClient() as client:
             s3_clinet = S3Client(client, self.config)
-            file_content = model.as_json()
+            file_content = model.to_json()
             byte_data = bytes(file_content, 'utf-8')
             await s3_clinet.upload(self.file_path, byte_data)
