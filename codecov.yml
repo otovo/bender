@@ -1,0 +1,24 @@
+# Docs: https://docs.codecov.io/docs/codecovyml-reference
+
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 0
+  round: down
+  range: "95...100"
+  status:
+    patch: false
+    project:
+      default:
+        target: 50%  # 95% after we implement working APIs!
+        threshold: 1%
+        only_pulls: true
+
+# just set to 'comment: false' to turn off comments
+comment:
+  layout: "files"
+  behavior: once
+  require_changes: true
+  require_base: yes
+  require_head: yes
