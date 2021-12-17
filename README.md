@@ -1,6 +1,6 @@
 # Bender 🤖
 
-A package for faster, safer, and simpler ML processes.
+A Python package for faster, safer, and simpler ML processes.
 
 ## Why use `bender`?
 
