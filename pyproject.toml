@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "bender"
+name = "benderml"
 version = "0.1.0a1"
 description = "A package that makes ML processes easier, faster and less error prone"
 authors = ["Mats E. Mollestad <mats@mollestad.no>"]
