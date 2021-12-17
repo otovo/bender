@@ -4,9 +4,15 @@ from pandas import DataFrame, Series
 
 from bender.transformation.transformation import (
     BinaryTransform,
+    CombineToMean,
+    CustomCodeTransformation,
     DateComponent,
+    FillMissingValue,
+    FillPolicy,
+    Filter,
     LogNormalDistributionShift,
     NeighbourDistance,
+    Relation,
     UnpackJson,
     UnpackPolicy,
 )
@@ -39,3 +45,23 @@ class Transformations:
     @staticmethod
     def binary(output_feature: str, lambda_function: Callable[[DataFrame], Series]) -> BinaryTransform:
         return BinaryTransform(output_feature, lambda_function)
+
+    @staticmethod
+    def fill_missing(feature_name: str, policy: FillPolicy) -> FillMissingValue:
+        return FillMissingValue(feature_name, policy)
+
+    @staticmethod
+    def filter(lambda_function: Callable[[DataFrame], Series]) -> Filter:
+        return Filter(lambda_function)
+
+    @staticmethod
+    def ratio(numerator: str, denumirator: str, output: str) -> Relation:
+        return Relation(numerator, denumirator, output)
+
+    @staticmethod
+    def custom(code: Callable[[DataFrame], DataFrame]) -> CustomCodeTransformation:
+        return CustomCodeTransformation(code)
+
+    @staticmethod
+    def combined_mean(features: set[str], output: str) -> CombineToMean:
+        return CombineToMean(output, list(features))

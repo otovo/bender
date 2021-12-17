@@ -337,7 +337,7 @@ class Relation(Transformation):
         return df
 
 
-class FillMissingValuePolicy:
+class FillPolicy:
     def fill_value(self, feature: str, df: DataFrame) -> Any:
         raise NotImplementedError()
 
@@ -350,7 +350,7 @@ class FillMissingValuePolicy:
         return MeanFillValue(similar_to if similar_to is not None else [])
 
 
-class ConstantFillValue(FillMissingValuePolicy):
+class ConstantFillValue(FillPolicy):
 
     value: Any
 
@@ -361,7 +361,7 @@ class ConstantFillValue(FillMissingValuePolicy):
         return self.value
 
 
-class MeanFillValue(FillMissingValuePolicy):
+class MeanFillValue(FillPolicy):
 
     similar_to_features: list[str]
 
@@ -379,9 +379,9 @@ class MeanFillValue(FillMissingValuePolicy):
 class FillMissingValue(Transformation):
 
     value_key: str
-    policy: FillMissingValuePolicy
+    policy: FillPolicy
 
-    def __init__(self, key: str, policy: FillMissingValuePolicy) -> None:
+    def __init__(self, key: str, policy: FillPolicy) -> None:
         self.value_key = key
         self.policy = policy
 
