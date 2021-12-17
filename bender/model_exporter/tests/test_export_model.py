@@ -12,7 +12,7 @@ pytestmark = pytest.mark.asyncio
 
 async def test_export_model_pipeline(date_df: DataFrame) -> None:
 
-    model, _ = await (
+    model, data_set = await (
         DataImporters.literal(date_df)
         .split(SplitStrategies.ratio(1))
         .train(XGBoostTrainer(), input_features=['y_values', 'x_values'], target_feature='classification')

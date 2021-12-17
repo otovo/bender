@@ -22,17 +22,14 @@ class TrainedXGBoostModel(TrainedClassificationModel):
         self.model = model
         self.input_features = input_features
 
-    def classification_indicies(self) -> list[str]:
-        return [str(name) for name in self.model.classes_]
+    def class_names(self) -> list[Any]:
+        return list(self.model.classes_)
 
     def _predict_on_valid(self, data: DataFrame) -> Series:
         return self.model.predict(data)
 
     def _predict_proba_on_valid(self, data: DataFrame) -> DataFrame:
         return self.model.predict_proba(data)
-
-    def loss(self, data: DataFrame) -> float:
-        return float(self.model.evals_result()['validation_0']['logloss'][-1])
 
     def estimator(self) -> Pipeline:
         return self.model

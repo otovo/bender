@@ -53,11 +53,11 @@ class TrainedClassificationModel(TrainedModel):
     Vector[float | int | bool | str | date | datetime] -> int | bool | str
     """
 
-    def classification_indicies(self) -> list[str]:
+    def class_names(self) -> list[Any]:
         raise NotImplementedError()
 
     def predict_proba(self, data: DataFrame) -> DataFrame:
-        label_indicies = self.classification_indicies()
+        label_indicies = self.class_names()
         predictions = self._predict_proba_on_valid(self._valid_data(data))
         return DataFrame(data=predictions, columns=label_indicies)
 

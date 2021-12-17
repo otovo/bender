@@ -11,6 +11,8 @@ from pandas.core.series import Series
 from bender.data_importer.importer import AppendImporter, CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
+from bender.metric.factory import Metricable
+from bender.metric.interface import Metric
 from bender.model_exporter.factory import ModelExportable
 from bender.model_exporter.interface import ModelExporter
 from bender.model_loader.model_loader import ModelLoadable, ModelLoader
@@ -235,7 +237,23 @@ class LossValidatable:
         raise NotImplementedError()
 
 
-class ExportTrainedModel(RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], LossValidatable):
+class PipelineMetric(RunnablePipeline[float]):
+
+    metric: Metric
+    pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
+
+    def __init__(self, pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], metric: Metric) -> None:
+        self.metric = metric
+        self.pipeline = pipeline
+
+    async def run(self) -> float:
+        model, data_set = await self.pipeline.run()
+        return await self.metric.metric(model, data_set)
+
+
+class ExportTrainedModel(
+    RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], LossValidatable, Metricable[PipelineMetric]
+):
 
     pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
     exporter: ModelExporter
@@ -251,12 +269,15 @@ class ExportTrainedModel(RunnablePipeline[tuple[TrainedModel, TrainingDataSet]],
         await self.exporter.export(model)
         return model, data_set
 
-    def loss(self) -> ValidationLoss:
-        return ValidationLoss(self)
+    def metric(self, metric: Metric) -> PipelineMetric:
+        return PipelineMetric(self, metric)
 
 
 class TrainAndEvaluatePipeline(
-    RunnablePipeline[tuple[TrainedModel, TrainingDataSet]], ModelExportable[ExportTrainedModel], LossValidatable
+    RunnablePipeline[tuple[TrainedModel, TrainingDataSet]],
+    ModelExportable[ExportTrainedModel],
+    LossValidatable,
+    Metricable[PipelineMetric],
 ):
 
     pipeline: RunnablePipeline[tuple[TrainedModel, TrainingDataSet]]
@@ -277,8 +298,8 @@ class TrainAndEvaluatePipeline(
     def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
         return ExportTrainedModel(self, exporter)
 
-    def loss(self) -> ValidationLoss:
-        return ValidationLoss(self)
+    def metric(self, metric: Metric) -> PipelineMetric:
+        return PipelineMetric(self, metric)
 
 
 class TrainingPipeline(
@@ -286,6 +307,7 @@ class TrainingPipeline(
     Evaluable[TrainAndEvaluatePipeline],
     ModelExportable[ExportTrainedModel],
     LossValidatable,
+    Metricable[PipelineMetric],
 ):
 
     data_loader: SplitedData
@@ -316,5 +338,5 @@ class TrainingPipeline(
     def export_model(self, exporter: ModelExporter) -> ExportTrainedModel:
         return ExportTrainedModel(self, exporter)
 
-    def loss(self) -> ValidationLoss:
-        return ValidationLoss(self)
+    def metric(self, metric: Metric) -> PipelineMetric:
+        return PipelineMetric(self, metric)
