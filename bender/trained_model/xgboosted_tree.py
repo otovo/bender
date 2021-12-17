@@ -6,10 +6,10 @@ from pandas import DataFrame, Series
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
 
-from bender.trained_model.interface import TrainedClassificationModel, TrainedModel
+from bender.trained_model.interface import TrainedClassificationModel, TrainedEstimatorModel, TrainedModel
 
 
-class TrainedXGBoostModel(TrainedClassificationModel):
+class TrainedXGBoostModel(TrainedClassificationModel, TrainedEstimatorModel):
     """A Trained XGBoosted tree
 
     Takes a Vector -> Int
