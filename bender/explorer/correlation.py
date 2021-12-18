@@ -21,7 +21,7 @@ class CorrelationMatrix(Explorer):
         self.exporter = exporter
         self.features = features
 
-    async def explor(self, df: DataFrame) -> None:
+    async def explore(self, df: DataFrame) -> None:
         if self.features:
             corr_heatmap = df[self.features].corr()
         else:

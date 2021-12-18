@@ -3,6 +3,7 @@ from typing import Optional
 from bender.explorer.correlation import CorrelationMatrix
 from bender.explorer.histogram import Histogram
 from bender.explorer.pair import PairPlot
+from bender.explorer.scatter import ScatterChartExplorer
 from bender.explorer.violin import ViolinPlot
 from bender.exporter.exporter import Exporter, MemoryExporter
 
@@ -25,3 +26,9 @@ class Explorers:
     @staticmethod
     def distribution(feature: str, target: str, exporter: Exporter = MemoryExporter()) -> ViolinPlot:
         return ViolinPlot(target, feature, exporter)
+
+    @staticmethod
+    def scatter(
+        x_feature: str, y_feature: str, target: Optional[str] = None, exporter: Exporter = MemoryExporter()
+    ) -> ScatterChartExplorer:
+        return ScatterChartExplorer(x_feature, y_feature, target, exporter)

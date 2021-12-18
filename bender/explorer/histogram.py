@@ -20,7 +20,7 @@ class Histogram(Explorer):
         self.exporter = exporter
         self.target = target
 
-    async def explor(self, df: DataFrame) -> None:
+    async def explore(self, df: DataFrame) -> None:
         features = list(df.columns)
         if self.features:
             features = self.features

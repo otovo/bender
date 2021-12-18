@@ -40,7 +40,7 @@ class ExplorePipeline(RunnablePipeline[DataFrame], Splitable):
     async def run(self) -> DataFrame:
         df = await self.pipeline.run()
         for explorer in self.explorers:
-            await explorer.explor(df)
+            await explorer.explore(df)
         return df
 
     def split(self, split_strategy: SplitStrategy) -> SplitedData:

@@ -18,7 +18,7 @@ async def test_histogram_explorer() -> None:
 
     _ = await (
         DataImporters.data_set(DataSets.IRIS)
-        .explore([Explorers.histogram(input_features)], LocalDiskExporter('test-exports/explorer'))
+        .explore([Explorers.histogram(input_features, exporter=LocalDiskExporter('test-exports/explorer'))])
         .run()
     )
 
@@ -42,6 +42,7 @@ async def test_histogram_with_target_explorer() -> None:
                 Explorers.histogram(input_features, target='target', exporter=exporter),
                 Explorers.correlation(input_features, exporter),
                 Explorers.pair_plot('target', input_features, exporter),
+                Explorers.scatter('pl exp', 'pw exp', target='target', exporter=exporter),
             ]
         )
         .split(SplitStrategies.uniform_ratio('target', 0.7))

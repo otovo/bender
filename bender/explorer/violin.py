@@ -17,7 +17,7 @@ class ViolinPlot(Explorer):
         self.y_feature = y_feature
         self.target = target
 
-    async def explor(self, df: DataFrame) -> None:
+    async def explore(self, df: DataFrame) -> None:
         fig, ax = plt.subplots(figsize=(7, 5))
         sns.violinplot(
             data=df,

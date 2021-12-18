@@ -18,6 +18,6 @@ class PairPlot(Explorer):
         self.target = target
         self.features = features
 
-    async def explor(self, df: DataFrame) -> None:
+    async def explore(self, df: DataFrame) -> None:
         plot = sns.pairplot(df, hue=self.target, vars=self.features)
         await self.exporter.store_figure(plot.fig)
