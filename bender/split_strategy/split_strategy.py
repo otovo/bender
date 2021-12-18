@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -36,6 +36,36 @@ class TrainingDataSet:
 class SplitStrategy:
     async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
         raise NotImplementedError()
+
+
+class UniformSplitRatio(SplitStrategy):
+
+    ratio: float
+    group_by: str
+
+    def __init__(self, ratio: float, group_by: str) -> None:
+        self.ratio = ratio
+        self.group_by = group_by
+
+    async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
+
+        train: Optional[DataFrame] = None
+        validate: Optional[DataFrame] = None
+
+        for index, group_value in enumerate(df[self.group_by].unique()):
+            rows = df.loc[df[self.group_by] == group_value]
+            split_index = int(len(rows) * self.ratio)
+            sub_train = rows[:split_index]
+            sub_validate = rows[split_index:]
+
+            if index != 0:
+                train = train.append(sub_train)  # type: ignore
+                validate = validate.append(sub_validate)  # type: ignore
+            else:
+                train = sub_train
+                validate = sub_validate
+
+        return train, validate
 
 
 class RandomRatioSplitter(SplitStrategy):

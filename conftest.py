@@ -1,8 +1,16 @@
 import os
+from logging.config import dictConfig
 
 import numpy as np
 import pytest
 from pandas import DataFrame
+
+
+def log_level(non_prod_value: str, prod_value: str) -> str:
+    """
+    Helper function for setting an appropriate log level in prod.
+    """
+    return prod_value
 
 
 @pytest.fixture  # type: ignore
@@ -54,3 +62,39 @@ test_exports_path = 'test-exports'
 
 if not os.path.isdir(test_exports_path):
     os.mkdir(test_exports_path)
+
+handler = 'console'
+
+
+def configure_logging() -> None:
+    dictConfig(
+        {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'console': {
+                    'class': 'logging.Formatter',
+                    'datefmt': '%H:%M:%S',
+                    'format': '%(levelname)s:\t\b%(asctime)s %(name)s:%(lineno)d %(message)s',
+                },
+            },
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'console',
+                },
+            },
+            'loggers': {
+                # project
+                'bender': {'handlers': [handler], 'level': log_level('INFO', 'DEBUG'), 'propagate': True},
+                # third-party packages
+                'arq': {'handlers': [handler], 'level': log_level('WARNING', 'INFO'), 'propagate': True},
+                'faker': {'handlers': [handler], 'level': 'INFO'},
+                'httpx': {'handlers': [handler], 'level': 'INFO'},
+                'oauthlib': {'handlers': [handler], 'level': 'INFO'},
+            },
+        }
+    )
+
+
+configure_logging()

@@ -28,7 +28,7 @@ from bender.transformation.transformation import Processable, Transformation
 logger = logging.getLogger(__name__)
 
 
-class ExplorePipeline(RunnablePipeline[DataFrame]):
+class ExplorePipeline(RunnablePipeline[DataFrame], Splitable):
 
     pipeline: RunnablePipeline[DataFrame]
     explorers: list[Explorer]
@@ -42,6 +42,9 @@ class ExplorePipeline(RunnablePipeline[DataFrame]):
         for explorer in self.explorers:
             await explorer.explor(df)
         return df
+
+    def split(self, split_strategy: SplitStrategy) -> SplitedData:
+        return SplitedData(self, split_strategy)
 
 
 class LoadedDataAndModel(
@@ -225,12 +228,12 @@ class LoadedData(
         return ExplorePipeline(self, explorers)
 
 
-class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['TrainingPipeline']):
+class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable):
 
-    data_loader: LoadedData
+    data_loader: RunnablePipeline[DataFrame]
     split_strategy: SplitStrategy
 
-    def __init__(self, data_loader: LoadedData, split_strategy: SplitStrategy) -> None:
+    def __init__(self, data_loader: RunnablePipeline[DataFrame], split_strategy: SplitStrategy) -> None:
         self.data_loader = data_loader
         self.split_strategy = split_strategy
 

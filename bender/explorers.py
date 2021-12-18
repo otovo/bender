@@ -15,8 +15,8 @@ class Explorers:
         return Histogram(features, target, exporter)
 
     @staticmethod
-    def correlation(exporter: Exporter = MemoryExporter()) -> CorrelationMatrix:
-        return CorrelationMatrix(exporter)
+    def correlation(features: Optional[list[str]] = None, exporter: Exporter = MemoryExporter()) -> CorrelationMatrix:
+        return CorrelationMatrix(features, exporter)
 
     @staticmethod
     def pair_plot(target: str, features: Optional[list[str]] = None, exporter: Exporter = MemoryExporter()) -> PairPlot:

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,14 +15,19 @@ logger = logging.getLogger(__name__)
 class CorrelationMatrix(Explorer):
 
     exporter: Exporter
+    features: Optional[list[str]]
 
-    def __init__(self, exporter: Exporter) -> None:
+    def __init__(self, features: Optional[list[str]], exporter: Exporter) -> None:
         self.exporter = exporter
+        self.features = features
 
     async def explor(self, df: DataFrame) -> None:
-        corr_heatmap = df.corr()
+        if self.features:
+            corr_heatmap = df[self.features].corr()
+        else:
+            corr_heatmap = df.corr()
         corr_threshold = 0.9
-        for feature in df.columns:
+        for feature in corr_heatmap.columns:
             is_feature_mask = corr_heatmap.columns == feature
             column_values = corr_heatmap[corr_heatmap.columns == feature]
             heatmap_mask = ((column_values > corr_threshold) | (column_values < -corr_threshold)) & (~is_feature_mask)
