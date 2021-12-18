@@ -11,6 +11,8 @@ from pandas.core.series import Series
 from bender.data_importer.importer import AppendImporter, CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
+from bender.explorer.factory import Explorable
+from bender.explorer.interface import Explorer
 from bender.metric.factory import Metricable
 from bender.metric.interface import Metric
 from bender.model_exporter.factory import ModelExportable
@@ -24,6 +26,22 @@ from bender.trained_model.interface import TrainedModel
 from bender.transformation.transformation import Processable, Transformation
 
 logger = logging.getLogger(__name__)
+
+
+class ExplorePipeline(RunnablePipeline[DataFrame]):
+
+    pipeline: RunnablePipeline[DataFrame]
+    explorers: list[Explorer]
+
+    def __init__(self, pipeline: RunnablePipeline[DataFrame], explorers: list[Explorer]) -> None:
+        self.pipeline = pipeline
+        self.explorers = explorers
+
+    async def run(self) -> DataFrame:
+        df = await self.pipeline.run()
+        for explorer in self.explorers:
+            await explorer.explor(df)
+        return df
 
 
 class LoadedDataAndModel(
@@ -137,6 +155,7 @@ class LoadedData(
     RunnablePipeline[DataFrame],
     Splitable,
     DataImporter,
+    Explorable[ExplorePipeline],
 ):
 
     importer: DataImporter
@@ -201,6 +220,9 @@ class LoadedData(
             DataImporter: A Importer that appends the multiple importers
         """
         return LoadedData(AppendImporter(self.importer, importer), self.transformations)
+
+    def explore(self, explorers: list[Explorer]) -> ExplorePipeline:
+        return ExplorePipeline(self, explorers)
 
 
 class SplitedData(RunnablePipeline[tuple[DataFrame, DataFrame]], Trainable['TrainingPipeline']):

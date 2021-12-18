@@ -337,6 +337,20 @@ class Relation(Transformation):
         return df
 
 
+class ExponentialShift(Transformation):
+
+    value: str
+    output: str
+
+    def __init__(self, value: str, output: str) -> None:
+        self.value = value
+        self.output = output
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        df[self.output] = np.exp(df[self.value])
+        return df
+
+
 class FillPolicy:
     def fill_value(self, feature: str, df: DataFrame) -> Any:
         raise NotImplementedError()

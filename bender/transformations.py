@@ -7,6 +7,7 @@ from bender.transformation.transformation import (
     CombineToMean,
     CustomCodeTransformation,
     DateComponent,
+    ExponentialShift,
     FillMissingValue,
     FillPolicy,
     Filter,
@@ -57,6 +58,10 @@ class Transformations:
     @staticmethod
     def ratio(numerator: str, denumirator: str, output: str) -> Relation:
         return Relation(numerator, denumirator, output)
+
+    @staticmethod
+    def exp_shift(value: str, output: str) -> ExponentialShift:
+        return ExponentialShift(value, output)
 
     @staticmethod
     def custom(code: Callable[[DataFrame], DataFrame]) -> CustomCodeTransformation:

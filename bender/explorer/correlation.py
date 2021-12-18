@@ -3,26 +3,25 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from pandas import DataFrame
 
-from bender.evaluator.interface import Evaluator
+from bender.explorer.interface import Explorer
 from bender.exporter.exporter import Exporter
-from bender.split_strategy.split_strategy import TrainingDataSet
-from bender.trained_model.interface import TrainedModel
 
 logger = logging.getLogger(__name__)
 
 
-class CorrelationMatrix(Evaluator):
+class CorrelationMatrix(Explorer):
 
     exporter: Exporter
 
     def __init__(self, exporter: Exporter) -> None:
         self.exporter = exporter
 
-    async def evaluate(self, model: TrainedModel, data_set: TrainingDataSet) -> None:
-        corr_heatmap = data_set.x_train.append(data_set.x_validate).corr()
+    async def explor(self, df: DataFrame) -> None:
+        corr_heatmap = df.corr()
         corr_threshold = 0.9
-        for feature in data_set.x_features:
+        for feature in df.columns:
             is_feature_mask = corr_heatmap.columns == feature
             column_values = corr_heatmap[corr_heatmap.columns == feature]
             heatmap_mask = ((column_values > corr_threshold) | (column_values < -corr_threshold)) & (~is_feature_mask)
