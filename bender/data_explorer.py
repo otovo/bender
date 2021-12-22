@@ -1,6 +1,6 @@
 from pandas import DataFrame
 
-from bender.data_importer.importer import DataImporter
+from bender.data_importer.interface import DataImporter
 from bender.transformation.transformation import Transformation
 
 
