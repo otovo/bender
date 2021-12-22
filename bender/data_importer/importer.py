@@ -63,9 +63,7 @@ class AppendImporter(DataImporter):
         self.second_importer = second_importer
 
     async def import_data(self) -> DataFrame:
-        first, second = await asyncio.gather(
-            await self.first_importer.import_data(), await self.second_importer.import_data()
-        )
+        first, second = await asyncio.gather(self.first_importer.import_data(), self.second_importer.import_data())
         return first.append(second)
 
 
@@ -82,7 +80,7 @@ class JoinedImporter(DataImporter):
 
     async def import_data(self) -> DataFrame:
         first_frame, second_frame = await asyncio.gather(
-            await self.first_import.import_data(), await self.second_import.import_data()
+            self.first_import.import_data(), self.second_import.import_data()
         )
         return first_frame.join(second_frame, on=self.join_key, how='inner')
 
