@@ -5,6 +5,7 @@ from typing import Any, Optional
 from pandas import DataFrame
 
 from bender.data_importer.importer import LiteralImporter, SqlImporter
+from bender.data_importer.local_csv import LocalCsvImporter
 from bender.pipeline.factory_states import LoadedData  # type: ignore
 
 
@@ -14,6 +15,7 @@ class DataSets(Enum):
     BREAST_CANCER = 'breast_cancer'
     DIGITS = 'digits'
     WINE = 'wine'
+    CALIFORNIA_HOUSING_PRICES = 'california_housing_prices'
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,10 @@ class DataImporters:
     @staticmethod
     def literal(df: DataFrame) -> LoadedData:
         return LoadedData(LiteralImporter(df), [])
+
+    @staticmethod
+    def csv(file: str, seperator: Optional[str] = None) -> LocalCsvImporter:
+        return LocalCsvImporter(file, seperator)
 
     @staticmethod
     def data_set(data_set: DataSets) -> LoadedData:
@@ -57,6 +63,10 @@ class DataImporters:
             from sklearn.datasets import load_wine
 
             df = DataImporters.__combine(load_wine(as_frame=True))
+        elif data_set == DataSets.CALIFORNIA_HOUSING_PRICES:
+            from sklearn.datasets import fetch_california_housing
+
+            df = DataImporters.__combine(fetch_california_housing(as_frame=True))
         else:
             raise Exception('Unable to find the correct data set')
         return DataImporters.literal(df)

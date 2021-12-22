@@ -4,6 +4,7 @@ from pandas import DataFrame, Series
 
 from bender.transformation.transformation import (
     BinaryTransform,
+    BinFeature,
     CombineToMean,
     CustomCodeTransformation,
     DateComponent,
@@ -70,3 +71,7 @@ class Transformations:
     @staticmethod
     def combined_mean(features: set[str], output: str) -> CombineToMean:
         return CombineToMean(output, list(features))
+
+    @staticmethod
+    def bin(feature: str, n_bins: int, output: str) -> BinFeature:
+        return BinFeature(feature, output, n_bins)

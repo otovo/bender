@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Generic, Optional, TypeVar
@@ -9,12 +10,9 @@ from databases import Database
 from databases.core import DatabaseURL
 from pandas import DataFrame
 
+from bender.data_importer.interface import DataImporter
+
 logger = logging.getLogger(__name__)
-
-
-class DataImporter:
-    async def import_data(self) -> DataFrame:
-        raise NotImplementedError()
 
 
 DataImporterType = TypeVar('DataImporterType')
@@ -65,8 +63,9 @@ class AppendImporter(DataImporter):
         self.second_importer = second_importer
 
     async def import_data(self) -> DataFrame:
-        first = await self.first_importer.import_data()
-        second = await self.second_importer.import_data()
+        first, second = await asyncio.gather(
+            await self.first_importer.import_data(), await self.second_importer.import_data()
+        )
         return first.append(second)
 
 
@@ -82,8 +81,9 @@ class JoinedImporter(DataImporter):
         self.join_key = join_key
 
     async def import_data(self) -> DataFrame:
-        first_frame = await self.first_import.import_data()
-        second_frame = await self.second_import.import_data()
+        first_frame, second_frame = await asyncio.gather(
+            await self.first_import.import_data(), await self.second_import.import_data()
+        )
         return first_frame.join(second_frame, on=self.join_key, how='inner')
 
 

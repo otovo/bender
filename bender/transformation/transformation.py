@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Generic, Optional, TypeVar
 
+import numpy
 import numpy as np
 import pandas as pd
 from numpy import datetime64, log1p, log2
@@ -423,4 +424,31 @@ class CombineToMean(Transformation):
 
     async def transform(self, df: DataFrame) -> DataFrame:
         df[self.output_key] = df[self.features].mean(axis=1)
+        return df
+
+
+class BinPolicy:
+    def bin(column: Series, n_bins: int) -> Series:
+        raise NotImplementedError()
+
+
+class BinFeature(Transformation):
+
+    feature: str
+    output: str
+    n_bins: int
+
+    def __init__(self, feature: str, output: str, n_bins: int) -> None:
+        self.feature = feature
+        self.output = output
+        self.n_bins = n_bins
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        df[self.output] = 0
+        for number in range(self.n_bins):
+            percentile = number / self.n_bins
+            threshold = df[self.feature].quantile(percentile)
+            mask = df[self.feature] > threshold
+            df.loc[mask, self.output] = number
+
         return df

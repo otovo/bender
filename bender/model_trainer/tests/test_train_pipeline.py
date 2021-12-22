@@ -7,7 +7,6 @@ from bender.importers import DataImporters
 from bender.model_trainer.xgboosted_tree import XGBoostTrainer
 from bender.split_strategies import SplitStrategies
 from bender.trained_model.xgboosted_tree import TrainedXGBoostModel
-from bender.transformation.transformation import BinaryTransform
 from bender.transformations import Transformations
 
 pytestmark = pytest.mark.asyncio
@@ -24,16 +23,18 @@ async def test_train_pipeline(date_df: DataFrame) -> None:
                 Transformations.date_component('day', 'date', output_feature='day_value'),
                 Transformations.date_component('month', 'date', output_feature='month_value'),
                 Transformations.date_component('year', 'date', output_feature='year_value'),
-                BinaryTransform('target', lambda df: df['y_values'] > 2),
             ]
         )
-        .split(SplitStrategies.ratio(0.7))
-        .train(XGBoostTrainer(), input_features=['x_values', 'day_value', 'month_value'], target_feature='target')
+        .split(SplitStrategies.uniform_ratio('classification', 0.5))
+        .train(
+            XGBoostTrainer(), input_features=['x_values', 'day_value', 'month_value'], target_feature='classification'
+        )
         .evaluate(
             [
                 Evaluators.roc_curve(Exporter.disk('test-exports/train-evaluation-roc.png')),
                 Evaluators.confusion_matrix(Exporter.disk('test-exports/train-evaluation-matrix.png')),
                 Evaluators.precision_recall(Exporter.disk('test-exports/train-evaluation-prec-recall.png')),
+                Evaluators.probability_for(0, exporter=Exporter.disk('test-exports/classification_probability')),
             ]
         )
     )

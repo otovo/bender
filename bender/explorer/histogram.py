@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -9,15 +11,48 @@ from bender.explorer.interface import Explorer
 from bender.exporter.exporter import Exporter
 
 
+class HistogramStatistic(Enum):
+    COUNT = 'count'
+    FREQUENCY = 'frequency'
+    PROBABILITY = 'probability'
+    PERCENT = 'percent'
+    DENSITY = 'density'
+
+
+class HistogramMultiple(Enum):
+    LAYER = 'layer'
+    DODGE = 'dodge'
+    STACK = 'stack'
+    FILL = 'fill'
+
+
+class UnivariantHistogramElement(Enum):
+    BARS = 'bars'
+    STEP = 'step'
+    POLY = 'poly'
+
+
+@dataclass
+class HistogramConfig:
+    n_bins: Optional[int] = None
+    statistic: HistogramStatistic = HistogramStatistic.COUNT
+    multiple: HistogramMultiple = HistogramMultiple.LAYER
+    element: UnivariantHistogramElement = UnivariantHistogramElement.BARS
+
+
 class Histogram(Explorer):
 
     features: Optional[list[str]]
     target: Optional[str]
+    config: HistogramConfig
     exporter: Exporter
 
-    def __init__(self, features: Optional[list[str]], target: Optional[str], exporter: Exporter) -> None:
+    def __init__(
+        self, features: Optional[list[str]], target: Optional[str], config: HistogramConfig, exporter: Exporter
+    ) -> None:
         self.features = features
         self.exporter = exporter
+        self.config = config
         self.target = target
 
     async def explore(self, df: DataFrame) -> None:
@@ -30,7 +65,14 @@ class Histogram(Explorer):
             fig, axs = plt.subplots(x_axs, y_axs, figsize=(7, 5))
             for index, feature in enumerate(features):
                 sns.histplot(
-                    df, x=feature, hue=self.target, multiple='stack', ax=axs[index % x_axs, int(floor(index / x_axs))]
+                    df,
+                    x=feature,
+                    hue=self.target,
+                    multiple=self.config.multiple.value,
+                    bins=self.config.n_bins if self.config.n_bins is not None else 'auto',
+                    element=self.config.element.value,
+                    stat=self.config.statistic.value,
+                    ax=axs[index % x_axs, int(floor(index / x_axs))],
                 )
             await self.exporter.store_figure(fig)
         else:

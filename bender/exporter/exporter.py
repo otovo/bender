@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-from typing import Union
-
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure as PltFigure
-from plotly.graph_objects import Figure as PlotFigure
-
-Figure = Union[PltFigure, PlotFigure]
+from matplotlib.figure import Figure
 
 
 class Exporter:
@@ -49,22 +44,12 @@ class LocalDiskExporter(Exporter):
 
     async def store_figure(self, figure: Figure) -> None:
         used_path = self.path + '.png'
-        if isinstance(figure, PltFigure):
-            figure.savefig(used_path)
-        elif isinstance(figure, PlotFigure):
-            image_data = figure.to_image('png')
-            with open(used_path, 'wb') as file:
-                file.write(image_data)
-        else:
-            raise NotImplementedError()
+        figure.savefig(used_path)
 
 
 class MemoryExporter(Exporter):
     async def store_figure(self, figure: Figure) -> None:
-        if isinstance(figure, (PlotFigure, PltFigure)):
-            plt.show()
-        else:
-            raise NotImplementedError()
+        plt.show()
 
 
 # class ClearmlExporter(Exporter):

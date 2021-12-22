@@ -46,6 +46,14 @@ class TrainedRegressionModel(TrainedModel):
     pass
 
 
+class TrainedProbabilisticModel(TrainedModel):
+    def predict_proba(self, data: DataFrame) -> DataFrame:
+        return self._predict_proba_on_valid(self._valid_data(data))
+
+    def _predict_proba_on_valid(self, data: DataFrame) -> DataFrame:
+        raise NotImplementedError()
+
+
 class TrainedClassificationModel(TrainedModel):
     """A trained model that preduces classification outputs
 
@@ -56,6 +64,8 @@ class TrainedClassificationModel(TrainedModel):
     def class_names(self) -> list[Any]:
         raise NotImplementedError()
 
+
+class TrainedProbabilisticClassificationModel(TrainedProbabilisticModel, TrainedClassificationModel):
     def predict_proba(self, data: DataFrame) -> DataFrame:
         label_indicies = self.class_names()
         predictions = self._predict_proba_on_valid(self._valid_data(data))

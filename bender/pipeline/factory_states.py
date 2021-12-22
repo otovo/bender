@@ -22,7 +22,7 @@ from bender.model_trainer.interface import ModelTrainer, Trainable
 from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput
 from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
-from bender.trained_model.interface import TrainedModel
+from bender.trained_model.interface import TrainedModel, TrainedProbabilisticModel
 from bender.transformation.transformation import Processable, Transformation
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,9 @@ class LoadedDataAndModel(
     def predict(self, on: Optional[Callable[[DataFrame], Series]] = None) -> PredictionPipeline:
         return PredictionPipeline(self, predict_on=on)
 
+    def predict_proba(self, on: Optional[Callable[[DataFrame], Series]] = None) -> ProbalisticPredictionPipeline:
+        return ProbalisticPredictionPipeline(self, predict_on=on)
+
     async def run(self) -> tuple[TrainedModel, DataFrame]:
         processed_data = await self.data_loader.run()
         loaded_model = await self.model_loader.run()
@@ -92,6 +95,31 @@ class PredictionPipeline(RunnablePipeline[Series]):
             predict_on_data = processed_data
 
         return model.predict(predict_on_data)
+
+
+class ProbalisticPredictionPipeline(RunnablePipeline[DataFrame]):
+
+    data_and_model: RunnablePipeline[tuple[TrainedProbabilisticModel, DataFrame]]
+    predict_on: Optional[Callable[[DataFrame], Series]]
+
+    def __init__(
+        self,
+        data_and_model: RunnablePipeline[tuple[TrainedProbabilisticModel, DataFrame]],
+        predict_on: Optional[Callable[[DataFrame], Series]],
+    ) -> None:
+        self.data_and_model = data_and_model
+        self.predict_on = predict_on
+
+    async def run(self) -> DataFrame:
+        model, processed_data = await self.data_and_model.run()
+
+        if self.predict_on:
+            predict_on_filter = self.predict_on(processed_data)
+            predict_on_data = processed_data[predict_on_filter]
+        else:
+            predict_on_data = processed_data
+
+        return model.predict_proba(predict_on_data)
 
 
 class ExtractFromPredictionPipeline(RunnablePipeline[None]):
@@ -317,6 +345,7 @@ class TrainAndEvaluatePipeline(
     async def run(self) -> tuple[TrainedModel, TrainingDataSet]:
         model, train_set = await self.pipeline.run()
         for evaluator in self.evaluators:
+            logger.info(f'Evaluating with evaloator: {type(evaluator)}')
             await evaluator.evaluate(model, train_set)
         return model, train_set
 

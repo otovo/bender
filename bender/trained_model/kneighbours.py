@@ -3,10 +3,10 @@ from typing import Any
 from pandas import DataFrame, Series
 from sklearn.neighbors import KNeighborsClassifier
 
-from bender.trained_model.interface import TrainedClassificationModel, TrainedModel
+from bender.trained_model.interface import TrainedModel, TrainedProbabilisticClassificationModel
 
 
-class TrainedKNeighboursClassifier(TrainedClassificationModel):
+class TrainedKNeighboursClassifier(TrainedProbabilisticClassificationModel):
 
     model: KNeighborsClassifier
     input_features: list[str]
