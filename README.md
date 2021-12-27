@@ -119,6 +119,25 @@ await (DataImporters.data_set(DataSets.IRIS)
     .export_model(Exporters.aws_s3(...))
 ```
 
+## Predict
+```python
+ModelLoaders
+    .aws_s3("path/to/model", s3_config)
+    .import_data(
+        DataImporters.sql(sql_url, sql_query)
+    )
+    .predict()
+```
+
+## Extract result
+```python
+ModelLoaders
+    .aws_s3(...)
+    .import_data(...)
+    .predict()
+    .extract(prediction_as="target", metadata=['entry_id'], exporter=DataExporters.disk("predictions.csv"))
+```
+
 ## Examples
 An example of the IRIS data set which trains a model to perfection
 
