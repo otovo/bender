@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Generic, Optional, TypeVar
 
-import numpy
 import numpy as np
 import pandas as pd
 from numpy import datetime64, log1p, log2
@@ -104,6 +103,18 @@ class Filter(Transformation):
         return df[self.lambda_function(df)]
 
 
+class SetIndex(Transformation):
+
+    column: str
+
+    def __init__(self, column: str) -> None:
+        self.column = column
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        df.set_index(self.column, inplace=True)
+        return df
+
+
 class LogNormalDistributionShift(Transformation):
 
     input_feature: str
@@ -159,6 +170,8 @@ class BinaryTransform(Transformation):
 
     async def transform(self, df: DataFrame) -> DataFrame:
         df[self.output_feature] = self.lambda_function(df)
+        if df[self.output_feature].dtype == bool:
+            df[self.output_feature] = df[self.output_feature].astype(int)
         return df
 
 
@@ -451,4 +464,51 @@ class BinFeature(Transformation):
             mask = df[self.feature] > threshold
             df.loc[mask, self.output] = number
 
+        return df
+
+
+class SplitString(Transformation):
+
+    feature: str
+    outputs: list[str]
+    seperator: str
+    select_number: int
+
+    def __init__(self, feature: str, outputs: list[str], seperator: str, select_number: int) -> None:
+        self.feature = feature
+        self.outputs = outputs
+        self.seperator = seperator
+        self.select_number = select_number
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        if df[self.feature].dtype != str:
+            df[self.feature] = df[self.feature].astype(str)
+        number_of_values = len(self.outputs)
+        n = self.select_number + number_of_values - 2  # 0 = 1 value
+        result = df[self.feature].str.split(self.seperator, n=n, expand=True)
+        df[self.outputs] = result[result.columns[self.select_number - 1 : n + 1]]
+        return df
+
+
+class LogToConsole(Transformation):
+    def __init__(self, data_to_log: Callable[[DataFrame], Any]) -> None:
+        self.data_to_log = data_to_log
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        data = self.data_to_log(df)
+        logger.info(data)
+        return df
+
+
+class ToCatagorical(Transformation):
+
+    input: str
+    output: str
+
+    def __init__(self, input: str, output: str) -> None:
+        self.input = input
+        self.output = output
+
+    async def transform(self, df: DataFrame) -> DataFrame:
+        df[self.output] = df[self.input].astype('category').cat.codes
         return df

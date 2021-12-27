@@ -1,6 +1,7 @@
 # type: ignore[misc]
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Callable, Optional
@@ -8,6 +9,9 @@ from typing import Callable, Optional
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 
+from bender.data_exporter.disk import DiskDataExporter
+from bender.data_exporter.interface import DataExporter
+from bender.data_exporter.pipeline import Extractable
 from bender.data_importer.importer import AppendImporter, CachedImporter, DataImportable, DataImporter, JoinedImporter
 from bender.evaluator.factory_method import Evaluable
 from bender.evaluator.interface import Evaluator
@@ -20,7 +24,7 @@ from bender.model_exporter.interface import ModelExporter
 from bender.model_loader.model_loader import ModelLoadable, ModelLoader
 from bender.model_trainer.interface import ModelTrainer, Trainable
 from bender.pipeline.interface import RunnablePipeline
-from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput
+from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput, ProbabilisticPredictable
 from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
 from bender.trained_model.interface import TrainedModel, TrainedProbabilisticModel
 from bender.transformation.transformation import Processable, Transformation
@@ -50,6 +54,7 @@ class ExplorePipeline(RunnablePipeline[DataFrame], Splitable):
 class LoadedDataAndModel(
     Processable,
     Predictable,
+    ProbabilisticPredictable,
     RunnablePipeline[tuple[TrainedModel, DataFrame]],
 ):
 
@@ -71,12 +76,45 @@ class LoadedDataAndModel(
         return ProbalisticPredictionPipeline(self, predict_on=on)
 
     async def run(self) -> tuple[TrainedModel, DataFrame]:
-        processed_data = await self.data_loader.run()
-        loaded_model = await self.model_loader.run()
-        return (loaded_model, processed_data)
+        return await asyncio.gather(self.model_loader.run(), self.data_loader.run())
 
 
-class PredictionPipeline(RunnablePipeline[Series]):
+class Extractor(RunnablePipeline[DataFrame]):
+
+    pipeline: RunnablePipeline[DataFrame]
+    prediction_feature: str
+    features: list[str]
+    exporter: DataExporter
+    transformations: list[Transformation]
+
+    def __init__(
+        self,
+        pipeline: RunnablePipeline[tuple[TrainedModel, DataFrame, Series]],
+        prediction_feature: str,
+        features: list[str],
+        exporter: DataExporter,
+        transformations: list[Transformation],
+    ) -> None:
+        self.pipeline = pipeline
+        self.prediction_feature = prediction_feature
+        self.features = features
+        self.exporter = exporter
+        self.transformations = transformations
+
+    async def run(self) -> DataFrame:
+        model, data, predictions = await self.pipeline.run()
+
+        extraction = DataFrame()
+        if self.features:
+            extraction = data[self.features]
+        extraction[self.prediction_feature] = predictions
+        for transformation in self.transformations:
+            extraction = await transformation.transform(extraction)
+        await self.exporter.export(extraction)
+        return data
+
+
+class PredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]], Extractable):
 
     data_and_model: LoadedDataAndModel
     predict_on: Optional[Callable[[DataFrame], Series]]
@@ -85,7 +123,7 @@ class PredictionPipeline(RunnablePipeline[Series]):
         self.data_and_model = data_and_model
         self.predict_on = predict_on
 
-    async def run(self) -> Series:
+    async def run(self) -> tuple[TrainedModel, DataFrame, Series]:
         model, processed_data = await self.data_and_model.run()
 
         if self.predict_on:
@@ -93,8 +131,23 @@ class PredictionPipeline(RunnablePipeline[Series]):
             predict_on_data = processed_data[predict_on_filter]
         else:
             predict_on_data = processed_data
+        result = model.predict(predict_on_data)
+        return (model, processed_data, result)
 
-        return model.predict(predict_on_data)
+    def extract(
+        self,
+        prediction_as: str,
+        metadata: Optional[list[str]] = None,
+        exporter: DataExporter = DiskDataExporter('predictions.csv'),
+        transforations: Optional[list[Transformation]] = None,
+    ) -> Extractor:
+        return Extractor(
+            self,
+            prediction_as,
+            [] if metadata is None else metadata,
+            exporter,
+            [] if transforations is None else transforations,
+        )
 
 
 class ProbalisticPredictionPipeline(RunnablePipeline[DataFrame]):
@@ -240,7 +293,7 @@ class LoadedData(
             importer = CachedImporter(self.importer, path, datetime.now() + timedelta(days=1))
         return LoadedData(importer, self.transformations)
 
-    def append(self, importer: LoadedData) -> LoadedData:
+    def append(self, importer: LoadedData, ignore_index: bool = True) -> LoadedData:
         """Append two differnet data importers.
         This can be usefull when you have different types of data, but with the same features
 
@@ -250,7 +303,7 @@ class LoadedData(
         Returns:
             DataImporter: A Importer that appends the multiple importers
         """
-        return LoadedData(AppendImporter(self.importer, importer), self.transformations)
+        return LoadedData(AppendImporter(self.importer, importer, ignore_index=ignore_index), self.transformations)
 
     def explore(self, explorers: list[Explorer]) -> ExplorePipeline:
         return ExplorePipeline(self, explorers)

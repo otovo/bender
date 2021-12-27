@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, Union
 
 from pandas import DataFrame, Series
 
@@ -13,8 +13,12 @@ from bender.transformation.transformation import (
     FillPolicy,
     Filter,
     LogNormalDistributionShift,
+    LogToConsole,
     NeighbourDistance,
     Relation,
+    SetIndex,
+    SplitString,
+    ToCatagorical,
     UnpackJson,
     UnpackPolicy,
 )
@@ -22,18 +26,16 @@ from bender.transformation.transformation import (
 
 class Transformations:
     @staticmethod
-    def log_normal_shift(
-        input_feature: str, output_feature: str, input_has_zeros: bool = True
-    ) -> LogNormalDistributionShift:
-        return LogNormalDistributionShift(input_feature, output_feature, input_has_zeros)
+    def log_normal_shift(input: str, output: str, input_has_zeros: bool = True) -> LogNormalDistributionShift:
+        return LogNormalDistributionShift(input, output, input_has_zeros)
 
     @staticmethod
-    def date_component(component: str, input_feature: str, output_feature: str) -> DateComponent:
-        return DateComponent(component, input_feature, output_feature)
+    def date_component(component: str, input: str, output: str) -> DateComponent:
+        return DateComponent(component, input, output)
 
     @staticmethod
-    def unpack_json(input_feature: str, key: str, output_feature: str, policy: UnpackPolicy) -> UnpackJson:
-        return UnpackJson(input_feature, key, output_feature, policy)
+    def unpack_json(input: str, key: str, output: str, policy: UnpackPolicy) -> UnpackJson:
+        return UnpackJson(input, key, output, policy)
 
     @staticmethod
     def neighour_distance(
@@ -45,12 +47,20 @@ class Transformations:
         return NeighbourDistance(number_of_neighbours, latitude, longitude, to)
 
     @staticmethod
-    def binary(output_feature: str, lambda_function: Callable[[DataFrame], Series]) -> BinaryTransform:
-        return BinaryTransform(output_feature, lambda_function)
+    def compute(output: str, computation: Callable[[DataFrame], Series]) -> BinaryTransform:
+        return BinaryTransform(output, computation)
 
     @staticmethod
-    def fill_missing(feature_name: str, policy: FillPolicy) -> FillMissingValue:
-        return FillMissingValue(feature_name, policy)
+    def fill_missing(feature: str, policy: FillPolicy) -> FillMissingValue:
+        return FillMissingValue(feature, policy)
+
+    @staticmethod
+    def to_catigorical(feature: str, output: Optional[str] = None) -> ToCatagorical:
+        return ToCatagorical(feature, feature if output is None else output)
+
+    @staticmethod
+    def log_to_console(data: Callable[[DataFrame], Any]) -> LogToConsole:
+        return LogToConsole(data)
 
     @staticmethod
     def filter(lambda_function: Callable[[DataFrame], Series]) -> Filter:
@@ -75,3 +85,15 @@ class Transformations:
     @staticmethod
     def bin(feature: str, n_bins: int, output: str) -> BinFeature:
         return BinFeature(feature, output, n_bins)
+
+    @staticmethod
+    def set_index(feature: str) -> SetIndex:
+        return SetIndex(feature)
+
+    @staticmethod
+    def split_string(
+        feature: str, seperator: str, output: Union[list[str], str], select_number: int = 1
+    ) -> SplitString:
+        if isinstance(output, str):
+            output = [output]
+        return SplitString(feature, output, seperator, select_number)

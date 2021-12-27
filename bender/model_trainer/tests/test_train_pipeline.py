@@ -20,9 +20,9 @@ async def test_train_pipeline(date_df: DataFrame) -> None:
             [
                 Transformations.log_normal_shift('y_values', 'y_log', input_has_zeros=False),
                 Transformations.neighour_distance(number_of_neighbours=2, latitude='lat', longitude='long'),
-                Transformations.date_component('day', 'date', output_feature='day_value'),
-                Transformations.date_component('month', 'date', output_feature='month_value'),
-                Transformations.date_component('year', 'date', output_feature='year_value'),
+                Transformations.date_component('day', 'date', output='day_value'),
+                Transformations.date_component('month', 'date', output='month_value'),
+                Transformations.date_component('year', 'date', output='year_value'),
             ]
         )
         .split(SplitStrategies.uniform_ratio('classification', 0.5))

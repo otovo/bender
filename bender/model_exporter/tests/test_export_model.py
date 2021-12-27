@@ -20,6 +20,6 @@ async def test_export_model_pipeline(date_df: DataFrame) -> None:
         .run()
     )
 
-    result = await (DataImporters.literal(date_df).load_model(ModelLoaders.literal(model)).predict().run())
+    _, _, result = await (DataImporters.literal(date_df).load_model(ModelLoaders.literal(model)).predict().run())
 
     assert len(result) == len(date_df)

@@ -14,6 +14,7 @@ class XGBoostTrainer(ModelTrainer):
 
     def __init__(
         self,
+        enable_categorical: bool = False,
         use_label_encoder: bool = False,
         learning_rate: float = 0.01,
         max_depth: int = 5,
@@ -27,6 +28,7 @@ class XGBoostTrainer(ModelTrainer):
         alpha: float = 0,
     ) -> None:
         self.xgboost_parmas = {
+            'enable_categorical': enable_categorical,
             'use_label_encoder': use_label_encoder,
             'learning_rate': learning_rate,
             'max_depth': max_depth,

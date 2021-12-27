@@ -19,9 +19,9 @@ async def test_training_pipeline(date_df: DataFrame) -> None:
         [
             Transformations.log_normal_shift('y_values', 'y_log', input_has_zeros=False),
             Transformations.neighour_distance(number_of_neighbours=2, latitude='lat', longitude='long'),
-            Transformations.date_component('day', 'date', output_feature='day_value'),
-            Transformations.date_component('month', 'date', output_feature='month_value'),
-            Transformations.date_component('year', 'date', output_feature='year_value'),
+            Transformations.date_component('day', 'date', output='day_value'),
+            Transformations.date_component('month', 'date', output='month_value'),
+            Transformations.date_component('year', 'date', output='year_value'),
         ]
     )
     output_df = await pipeline.run()
@@ -32,7 +32,7 @@ async def test_training_pipeline(date_df: DataFrame) -> None:
 
 
 async def run_test_for(policy: UnpackPolicy, name: str, json_df: DataFrame) -> None:
-    transformation = Transformations.unpack_json('json_data', key='value', output_feature=f'out_{name}', policy=policy)
+    transformation = Transformations.unpack_json('json_data', key='value', output=f'out_{name}', policy=policy)
     ret_df = await transformation.transform(json_df)
     assert np.all(ret_df[f'out_{name}'] == ret_df[f'value_{name}'])
 

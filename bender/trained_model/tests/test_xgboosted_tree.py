@@ -28,9 +28,9 @@ async def test_xgboosted_tree(date_df: DataFrame) -> None:
     json_dict = json.loads(json_data)
     loaded_model = TrainedXGBoostModel.from_dict(json_dict)
 
-    org_result = await DataImporters.literal(date_df).load_model(ModelLoaders.literal(model)).predict().run()
+    _, _, org_result = await DataImporters.literal(date_df).load_model(ModelLoaders.literal(model)).predict().run()
 
-    loaded_result = await (
+    _, _, loaded_result = await (
         DataImporters.literal(date_df).load_model(ModelLoaders.literal(loaded_model)).predict().run()
     )
 

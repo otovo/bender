@@ -60,6 +60,6 @@ class Predictable:
 ProbPredictableType = TypeVar('ProbPredictableType')
 
 
-class ProbabilisticPredicatble:
+class ProbabilisticPredictable:
     def predict_proba(self, on: Optional[Callable[[DataFrame], Series]] = None) -> ProbPredictableType:
         raise NotImplementedError()

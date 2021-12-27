@@ -36,7 +36,7 @@ class UnivariantHistogramElement(Enum):
 class HistogramConfig:
     n_bins: Optional[int] = None
     statistic: HistogramStatistic = HistogramStatistic.COUNT
-    multiple: HistogramMultiple = HistogramMultiple.LAYER
+    multiple: HistogramMultiple = HistogramMultiple.STACK
     element: UnivariantHistogramElement = UnivariantHistogramElement.BARS
 
 

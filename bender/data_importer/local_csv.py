@@ -16,4 +16,5 @@ class LocalCsvImporter(DataImporter):
         self.seperator = seperator
 
     async def import_data(self) -> DataFrame:
-        return pandas.read_csv(self.file, sep=self.seperator)
+        sep = self.seperator if self.seperator is not None else ','
+        return pandas.read_csv(self.file, sep=sep)

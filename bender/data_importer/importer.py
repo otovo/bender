@@ -57,14 +57,16 @@ class AppendImporter(DataImporter):
 
     first_importer: DataImporter
     second_importer: DataImporter
+    ignore_index: bool
 
-    def __init__(self, first_importer: DataImporter, second_importer: DataImporter) -> None:
+    def __init__(self, first_importer: DataImporter, second_importer: DataImporter, ignore_index: bool) -> None:
         self.first_importer = first_importer
         self.second_importer = second_importer
+        self.ignore_index = ignore_index
 
     async def import_data(self) -> DataFrame:
         first, second = await asyncio.gather(self.first_importer.import_data(), self.second_importer.import_data())
-        return first.append(second)
+        return first.append(second, ignore_index=True)
 
 
 class JoinedImporter(DataImporter):

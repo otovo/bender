@@ -22,7 +22,7 @@ async def test_predict_data() -> None:
 
     test_data = DataFrame({'x': [2, -3, 4], 'y': [2, -3, 4]})
     expected = [1, 0, 1]
-    result = await (ModelLoaders.literal(model).import_data(DataImporters.literal(test_data)).predict().run())
+    _, _, result = await (ModelLoaders.literal(model).import_data(DataImporters.literal(test_data)).predict().run())
 
     assert np.all(expected == result)
 

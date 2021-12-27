@@ -37,8 +37,8 @@ class DataImporters:
         return LoadedData(LiteralImporter(df), [])
 
     @staticmethod
-    def csv(file: str, seperator: Optional[str] = None) -> LocalCsvImporter:
-        return LocalCsvImporter(file, seperator)
+    def csv(file: str, seperator: Optional[str] = None) -> LoadedData:
+        return LoadedData(LocalCsvImporter(file, seperator), transformations=[])
 
     @staticmethod
     def data_set(data_set: DataSets) -> LoadedData:
