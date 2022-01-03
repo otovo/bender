@@ -39,7 +39,7 @@ class TrainedXGBoostModel(TrainedProbabilisticClassificationModel, TrainedEstima
         self.model.save_model(path)
         with open(path) as file:
             model_json = file.read()
-        return json.dumps({'input_features': self.input_features, 'model': model_json})
+        return json.dumps({'input_features': self.input_features, 'model': model_json, 'name': 'xgboost'})
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> TrainedModel:

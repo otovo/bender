@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
@@ -81,7 +81,7 @@ class LoadedDataAndModel(
 
 class Extractor(RunnablePipeline[DataFrame]):
 
-    pipeline: RunnablePipeline[DataFrame]
+    pipeline: RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]
     prediction_feature: str
     features: list[str]
     exporter: DataExporter
@@ -108,6 +108,42 @@ class Extractor(RunnablePipeline[DataFrame]):
         if self.features:
             extraction = data[self.features]
         extraction[self.prediction_feature] = predictions
+        for transformation in self.transformations:
+            extraction = await transformation.transform(extraction)
+        await self.exporter.export(extraction)
+        return data
+
+
+class ExtractorProbability(RunnablePipeline[DataFrame]):
+
+    pipeline: RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]
+    prediction_features: dict[Any, str]
+    features: list[str]
+    exporter: DataExporter
+    transformations: list[Transformation]
+
+    def __init__(
+        self,
+        pipeline: RunnablePipeline[tuple[TrainedModel, DataFrame, Series]],
+        prediction_features: dict[Any, str],
+        features: list[str],
+        exporter: DataExporter,
+        transformations: list[Transformation],
+    ) -> None:
+        self.pipeline = pipeline
+        self.prediction_features = prediction_features
+        self.features = features
+        self.exporter = exporter
+        self.transformations = transformations
+
+    async def run(self) -> DataFrame:
+        model, data, predictions = await self.pipeline.run()
+
+        extraction = DataFrame()
+        if self.features:
+            extraction = data[self.features]
+        for classification, output_name in self.prediction_features.items():
+            extraction[output_name] = predictions[classification]
         for transformation in self.transformations:
             extraction = await transformation.transform(extraction)
         await self.exporter.export(extraction)
@@ -150,7 +186,7 @@ class PredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]
         )
 
 
-class ProbalisticPredictionPipeline(RunnablePipeline[DataFrame]):
+class ProbalisticPredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]):
 
     data_and_model: RunnablePipeline[tuple[TrainedProbabilisticModel, DataFrame]]
     predict_on: Optional[Callable[[DataFrame], Series]]
@@ -163,7 +199,7 @@ class ProbalisticPredictionPipeline(RunnablePipeline[DataFrame]):
         self.data_and_model = data_and_model
         self.predict_on = predict_on
 
-    async def run(self) -> DataFrame:
+    async def run(self) -> tuple[TrainedModel, DataFrame, Series]:
         model, processed_data = await self.data_and_model.run()
 
         if self.predict_on:
@@ -172,7 +208,22 @@ class ProbalisticPredictionPipeline(RunnablePipeline[DataFrame]):
         else:
             predict_on_data = processed_data
 
-        return model.predict_proba(predict_on_data)
+        return (model, processed_data, model.predict_proba(predict_on_data))
+
+    def extract(
+        self,
+        prediction_as: dict[Any, str],
+        metadata: Optional[list[str]] = None,
+        exporter: DataExporter = DiskDataExporter('predictions.csv'),
+        transforations: Optional[list[Transformation]] = None,
+    ) -> ExtractorProbability:
+        return ExtractorProbability(
+            self,
+            prediction_as,
+            [] if metadata is None else metadata,
+            exporter,
+            [] if transforations is None else transforations,
+        )
 
 
 class ExtractFromPredictionPipeline(RunnablePipeline[None]):

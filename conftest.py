@@ -36,6 +36,7 @@ def date_df() -> DataFrame:
             'expected_day': [20, 21, 22, 24, 25, 27, 28, 2, 9],
             'expected_month': [1, 2, 3, 4, 5, 6, 7, 8, 9],
             'classification': [0, 0, 1, 3, 2, 2, 1, 3, 3],
+            'bool_classification': [True, True, True, False, False, True, False, False, True],
         }
     ).copy()
 
