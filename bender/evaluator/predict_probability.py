@@ -3,7 +3,6 @@ from typing import Any, Optional
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pandas.core.frame import DataFrame
 
 from bender.evaluator.interface import Evaluator
 from bender.exporter.exporter import Exporter
@@ -33,22 +32,24 @@ class ProbabilityForClassification(Evaluator):
             )
             return
         pred_result = model.predict_proba(data_set.x_validate)
+        true_results = data_set.y_validate.reset_index(drop=True)
+        if set(true_results.unique().tolist()) == {0, 1}:
+            true_results = true_results.astype(bool)
 
-        data = DataFrame(data=[], columns=[])
-        data['true_classification'] = data_set.y_validate.reset_index(drop=True)
-        data['predicted'] = pred_result[self.classification_of_interest]
+        labels = true_results.unique()
         # Scores compared to true labels
         fig, ax = plt.subplots(1, 1, figsize=(20, 10))
         n_bins = 50 if self.num_bins is None else self.num_bins
         bin_width = 1 / n_bins
+        plt.xlim(0, 1)
         sns.histplot(
-            data=data,
-            x='predicted',
-            hue='true_classification',
+            data=pred_result,
+            x=self.classification_of_interest,
+            hue=true_results,
             multiple='stack',
-            bins=n_bins,
             binwidth=bin_width,
+            legend=False,
             ax=ax,
         )
-        plt.xlim(0, 1)
+        plt.legend(title='True Values', labels=[str(label) for label in labels])
         await self.exporter.store_figure(fig)

@@ -64,7 +64,7 @@ async def test_xgboosted_tree_proba(date_df: DataFrame) -> None:
 
     model, _ = await (
         DataImporters.literal(date_df)
-        .split(SplitStrategies.ratio(1))
+        .split(SplitStrategies.ratio(0.7))
         .train(XGBoostTrainer(), input_features=['y_values', 'x_values'], target_feature='bool_classification')
         .run()
     )

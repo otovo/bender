@@ -1,5 +1,6 @@
 from typing import Any
 
+import numpy as np
 from xgboost import XGBClassifier
 
 from bender.model_trainer.interface import ModelTrainer
@@ -47,6 +48,9 @@ class XGBoostTrainer(ModelTrainer):
         #     print(data_split.y_train.dtypes)
         #     raise Exception('Training classification model on continuse values. Maybe you want a regression model?')
         model = XGBClassifier(**self.xgboost_parmas)
-        # model.scale_pos_weight = int(np.round(data_split.x_train.shape[0] / data_split.y_train.sum() - 1))
+        if set(data_split.y_train.unique().tolist()) == {1, 0}:
+            pos_data = len(data_split.y_train.loc[data_split.y_train == 1])
+            neg_data = data_split.y_train.shape[0] - pos_data
+            model.scale_pos_weight = int(np.round(neg_data / pos_data))
         model.fit(data_split.x_train, data_split.y_train, eval_set=[(data_split.x_validate, data_split.y_validate)])
         return TrainedXGBoostModel(model, data_split.x_features)
