@@ -290,6 +290,7 @@ class NeighbourDistance(Transformation):
     latitude_key: str
     longitude_key: str
     number_of_neighbours: int
+    output: str
 
     def __init__(
         self,
@@ -297,11 +298,13 @@ class NeighbourDistance(Transformation):
         latitude: str = 'latitude',
         longitude: str = 'longitude',
         to: Optional[Callable[[DataFrame], Series]] = None,
+        output: Optional[str] = None,
     ) -> None:
         self.latitude_key = latitude
         self.longitude_key = longitude
         self.number_of_neighbours = number_of_neighbours
         self.to = to
+        self.output = 'distance_neighbor' if output is None else output
 
     async def transform(self, df: DataFrame) -> DataFrame:
         for column in df[[self.latitude_key, self.longitude_key]]:
@@ -317,14 +320,14 @@ class NeighbourDistance(Transformation):
 
         ball = BallTree(to_points[[f'{self.latitude_key}_rad', f'{self.longitude_key}_rad']].values, metric='haversine')
         distances, _ = ball.query(
-            df[[f'{self.longitude_key}_rad', f'{self.longitude_key}_rad']].values, k=self.number_of_neighbours + 1
+            df[[f'{self.latitude_key}_rad', f'{self.longitude_key}_rad']].values, k=self.number_of_neighbours + 1
         )
 
         # To km
         distances *= 6371
 
         distances[distances == 0] = np.nan
-        df['distance_neighbor'] = distances.mean(axis=1)
+        df['distance_neighbor'] = np.nanmean(distances, axis=1)
 
         return df
 
