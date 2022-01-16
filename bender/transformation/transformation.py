@@ -100,7 +100,7 @@ class Filter(Transformation):
         self.lambda_function = lambda_function
 
     async def transform(self, df: DataFrame) -> DataFrame:
-        return df[self.lambda_function(df)]
+        return df[self.lambda_function(df)].copy()
 
 
 class SetIndex(Transformation):

@@ -2,9 +2,10 @@ import logging
 from enum import Enum
 from typing import Any, Optional
 
+from databases import Database
 from pandas import DataFrame
 
-from bender.data_importer.importer import LiteralImporter, SqlImporter
+from bender.data_importer.importer import LiteralImporter
 from bender.data_importer.local_csv import LocalCsvImporter
 from bender.pipeline.factory_states import LoadedData  # type: ignore
 
@@ -29,8 +30,16 @@ class DataImporters:
         return df
 
     @staticmethod
+    def sql_with(database: Database, query: str, values: Optional[dict[str, Any]] = None) -> LoadedData:
+        from bender.data_importer.importer import SqlImporter
+
+        return LoadedData(SqlImporter(database, query, values=values), [])
+
+    @staticmethod
     def sql(url: str, query: str, values: Optional[dict[str, Any]] = None) -> LoadedData:
-        return LoadedData(SqlImporter(url, query, values=values), [])
+        from bender.data_importer.importer import SqlImporter
+
+        return LoadedData(SqlImporter(Database(url), query, values=values), [])
 
     @staticmethod
     def literal(df: DataFrame) -> LoadedData:

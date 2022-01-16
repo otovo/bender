@@ -2,6 +2,7 @@ from typing import Any, Callable, Optional, Union
 
 from pandas import DataFrame, Series
 
+from bender.transformation.schema import SchemaTransformation, SchemaType
 from bender.transformation.transformation import (
     BinaryTransform,
     BinFeature,
@@ -97,3 +98,7 @@ class Transformations:
         if isinstance(output, str):
             output = [output]
         return SplitString(feature, output, seperator, select_number)
+
+    @staticmethod
+    def schema(schema: dict[str, SchemaType]) -> SchemaTransformation:
+        return SchemaTransformation(schema)

@@ -7,6 +7,7 @@ from numpy.testing import assert_almost_equal
 from pandas.core.frame import DataFrame, Series
 
 from bender.importers import DataImporters
+from bender.transformation.schema import SchemaType
 from bender.transformation.transformation import UnpackPolicy
 from bender.transformations import Transformations
 
@@ -69,3 +70,11 @@ async def test_date_component_handle_datetime_type(date_df: DataFrame) -> None:
     date_df['date'] = date_df['date'].apply(lambda date: datetime.fromisoformat(date))
     result = await Transformations.date_component('day', 'date', 'day_value').transform(date_df)
     assert np.all(result['expected_day'] == result['day_value'])
+
+
+async def test_schema(date_df: DataFrame) -> None:
+    schema = {'date': SchemaType.datetime(), 'x_values': SchemaType.integer()}
+    result_df = await Transformations.schema(schema).transform(date_df)
+
+    for (key, value) in schema.items():
+        assert result_df[key].dtype == value.data_type

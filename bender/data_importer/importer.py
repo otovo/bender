@@ -7,7 +7,6 @@ from typing import Any, Generic, Optional, TypeVar
 
 import pandas
 from databases import Database
-from databases.core import DatabaseURL
 from pandas import DataFrame
 
 from bender.data_importer.interface import DataImporter
@@ -102,16 +101,15 @@ class SqlImporter(DataImporter):
 
     query: str
     values: Optional[dict[str, Any]]
-    url: DatabaseURL
+    database: Database
 
-    def __init__(self, url: DatabaseURL, query: str, values: Optional[dict[str, Any]]) -> None:
+    def __init__(self, database: Database, query: str, values: Optional[dict[str, Any]]) -> None:
         self.query = query
-        self.url = url
+        self.database = database
         self.values = values
 
     async def import_data(self) -> DataFrame:
-        database = Database(self.url)
-        await database.connect()
-        records = await database.fetch_all(self.query, values=self.values)
-        await database.disconnect()
+        if not self.database.is_connected:
+            await self.database.connect()
+        records = await self.database.fetch_all(self.query, values=self.values)
         return DataFrame.from_records(records)

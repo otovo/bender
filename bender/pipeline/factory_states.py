@@ -141,9 +141,9 @@ class ExtractorProbability(RunnablePipeline[DataFrame]):
 
         extraction = DataFrame()
         if self.features:
-            extraction = data[self.features]
+            extraction = data[self.features].copy()
         for classification, output_name in self.prediction_features.items():
-            extraction[output_name] = predictions[classification]
+            extraction[output_name] = predictions[classification].copy()
         for transformation in self.transformations:
             extraction = await transformation.transform(extraction)
         await self.exporter.export(extraction)
