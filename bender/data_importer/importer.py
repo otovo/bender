@@ -112,4 +112,4 @@ class SqlImporter(DataImporter):
         if not self.database.is_connected:
             await self.database.connect()
         records = await self.database.fetch_all(self.query, values=self.values)
-        return DataFrame.from_records(records)
+        return DataFrame.from_records([dict(record) for record in records])
