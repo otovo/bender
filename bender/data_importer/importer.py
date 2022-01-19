@@ -102,14 +102,20 @@ class SqlImporter(DataImporter):
     query: str
     values: Optional[dict[str, Any]]
     database: Database
+    should_disconnect: bool
 
-    def __init__(self, database: Database, query: str, values: Optional[dict[str, Any]]) -> None:
+    def __init__(
+        self, database: Database, query: str, values: Optional[dict[str, Any]], should_disconnect: bool
+    ) -> None:
         self.query = query
         self.database = database
         self.values = values
+        self.should_disconnect = should_disconnect
 
     async def import_data(self) -> DataFrame:
         if not self.database.is_connected:
             await self.database.connect()
         records = await self.database.fetch_all(self.query, values=self.values)
+        if self.should_disconnect:
+            await self.database.disconnect()
         return DataFrame.from_records([dict(record) for record in records])

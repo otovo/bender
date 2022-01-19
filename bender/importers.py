@@ -33,13 +33,13 @@ class DataImporters:
     def sql_with(database: Database, query: str, values: Optional[dict[str, Any]] = None) -> LoadedData:
         from bender.data_importer.importer import SqlImporter
 
-        return LoadedData(SqlImporter(database, query, values=values), [])
+        return LoadedData(SqlImporter(database, query, values=values, should_disconnect=False), [])
 
     @staticmethod
     def sql(url: str, query: str, values: Optional[dict[str, Any]] = None) -> LoadedData:
         from bender.data_importer.importer import SqlImporter
 
-        return LoadedData(SqlImporter(Database(url), query, values=values), [])
+        return LoadedData(SqlImporter(Database(url), query, values=values, should_disconnect=True), [])
 
     @staticmethod
     def literal(df: DataFrame) -> LoadedData:
