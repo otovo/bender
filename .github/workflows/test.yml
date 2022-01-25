@@ -50,7 +50,7 @@ jobs:
         id: poetry-cache
         with:
           path: ~/.local
-          key: key-7
+          key: key-8
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
