@@ -40,12 +40,14 @@ class SplitStrategy:
 
 class UniformSplitRatio(SplitStrategy):
 
+    start_offset: float
     ratio: float
     group_by: str
 
-    def __init__(self, ratio: float, group_by: str) -> None:
+    def __init__(self, ratio: float, group_by: str, start_offset: float) -> None:
         self.ratio = ratio
         self.group_by = group_by
+        self.start_offset = start_offset
 
     async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
 
@@ -54,16 +56,54 @@ class UniformSplitRatio(SplitStrategy):
 
         for index, group_value in enumerate(df[self.group_by].unique()):
             rows = df.loc[df[self.group_by] == group_value]
-            split_index = int(len(rows) * self.ratio)
-            sub_train = rows[:split_index]
-            sub_validate = rows[split_index:]
 
-            if index != 0:
-                train = train.append(sub_train)  # type: ignore
-                validate = validate.append(sub_validate)  # type: ignore
+            train_ranges: list[tuple[float, float]]
+            validate_ranges: list[tuple[float, float]]
+            if self.start_offset + self.ratio > 1:
+                start = self.start_offset + self.ratio - 1
+                train_ranges = [(0, start), (self.start_offset, 1)]
+                validate_ranges = [(start, self.start_offset)]
             else:
-                train = sub_train
-                validate = sub_validate
+                train_ranges = [(self.start_offset, self.start_offset + self.ratio)]
+                validate_ranges = [(0, self.start_offset), (self.start_offset + self.ratio, 1)]
+
+            for train_range in train_ranges:
+
+                split_start_index = int(round(len(rows) * train_range[0]))
+                split_end_index = int(round(len(rows) * train_range[1]))
+
+                if split_end_index == split_start_index:
+                    sub_train = rows[split_start_index : split_end_index + 1]
+                elif split_start_index == 0:
+                    sub_train = rows[:split_end_index]
+                elif split_end_index == len(rows):
+                    sub_train = rows[split_start_index:]
+                else:
+                    sub_train = rows[split_start_index:split_end_index]
+
+                if index != 0:
+                    train = train.append(sub_train)  # type: ignore
+                else:
+                    train = sub_train
+
+            for validate_range in validate_ranges:
+
+                split_start_index = int(round(len(rows) * validate_range[0]))
+                split_end_index = int(round(len(rows) * validate_range[1]))
+
+                if split_end_index == split_start_index:
+                    sub_validate = rows[split_start_index : split_end_index + 1]
+                elif split_start_index == 0:
+                    sub_validate = rows[:split_end_index]
+                elif split_end_index == len(rows):
+                    sub_validate = rows[split_start_index:]
+                else:
+                    sub_validate = rows[split_start_index:split_end_index]
+
+                if index != 0:
+                    validate = validate.append(sub_validate)  # type: ignore
+                else:
+                    validate = sub_validate
 
         return train, validate
 

@@ -15,7 +15,7 @@ def log_level(non_prod_value: str, prod_value: str) -> str:
 
 @pytest.fixture  # type: ignore
 def date_df() -> DataFrame:
-    values = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4], dtype=float)
+    values = np.array([0, 1, 1, 2, 2, 2, 3, 3, 4, 4], dtype=float)
     return DataFrame(
         {
             'x_values': values,
@@ -30,13 +30,14 @@ def date_df() -> DataFrame:
                 '2020-07-28T01:09:07',
                 '2020-08-02T01:09:07',
                 '2020-09-09T01:09:07',
+                '2020-10-09T01:09:07',
             ],
             'lat': values,
             'long': values,
-            'expected_day': [20, 21, 22, 24, 25, 27, 28, 2, 9],
-            'expected_month': [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            'classification': [0, 0, 1, 3, 2, 2, 1, 3, 3],
-            'bool_classification': [True, True, True, False, False, True, False, False, True],
+            'expected_day': [20, 21, 22, 24, 25, 27, 28, 2, 9, 3],
+            'expected_month': [1, 2, 3, 4, 5, 6, 7, 8, 9, 9],
+            'classification': [0, 0, 1, 3, 2, 2, 1, 3, 3, 3],
+            'bool_classification': [True, True, True, False, False, True, False, False, True, False],
         }
     ).copy()
 

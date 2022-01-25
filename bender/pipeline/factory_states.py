@@ -25,6 +25,7 @@ from bender.model_loader.model_loader import ModelLoadable, ModelLoader
 from bender.model_trainer.interface import ModelTrainer, Trainable
 from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput, ProbabilisticPredictable
+from bender.split_strategies import SplitStrategies
 from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
 from bender.trained_model.interface import TrainedModel, TrainedProbabilisticModel
 from bender.transformation.transformation import Processable, Transformation
@@ -186,6 +187,35 @@ class PredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]
         )
 
 
+class CrossValidate(RunnablePipeline[DataFrame]):
+
+    target: str
+    k_fold: int
+    pipeline: RunnablePipeline[DataFrame]
+
+    def __init__(
+        self,
+        pipeline: RunnablePipeline[DataFrame],
+        target: str,
+        k_fold: int,
+        validation: Callable[[SplitedData], RunnablePipeline],
+    ) -> None:
+        self.k_fold = k_fold
+        self.target = target
+        self.pipeline = pipeline
+        self.validation = validation
+
+    async def run(self) -> DataFrame:
+        train_ratio = (self.k_fold - 1) / self.k_fold
+        offset_ratio = 1 / self.k_fold
+        for i in range(0, self.k_fold):
+            data_pipe = SplitedData(
+                self.pipeline, SplitStrategies.uniform_ratio(self.target, train_ratio, offset_ratio * i)
+            )
+            pipe = self.validation(data_pipe)
+            await pipe.run()
+
+
 class ProbalisticPredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]):
 
     data_and_model: RunnablePipeline[tuple[TrainedProbabilisticModel, DataFrame]]
@@ -326,6 +356,11 @@ class LoadedData(
 
     def split(self, split_strategy: SplitStrategy) -> SplitedData:
         return SplitedData(self, split_strategy=split_strategy)
+
+    def cross_validate(
+        self, target: str, k_fold: int, validation: Callable[[SplitedData], RunnablePipeline]
+    ) -> CrossValidate:
+        return CrossValidate(self, target, k_fold, validation)
 
     def join_import(self, importer: DataImporter, join_key: str) -> LoadedData:
         return LoadedData(

@@ -11,5 +11,5 @@ class SplitStrategies:
         return SortedRatioSplitter(min(max(ratio, 0), 1), sort_key)
 
     @staticmethod
-    def uniform_ratio(feature: str, ratio: float) -> UniformSplitRatio:
-        return UniformSplitRatio(ratio, feature)
+    def uniform_ratio(feature: str, ratio: float, start_offset: float = 0) -> UniformSplitRatio:
+        return UniformSplitRatio(ratio, feature, start_offset)
