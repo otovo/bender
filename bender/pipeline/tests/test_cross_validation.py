@@ -1,7 +1,6 @@
 import pytest
 from pandas import DataFrame
 
-from bender.evaluators import Evaluators
 from bender.importers import DataImporters
 from bender.model_trainer.xgboosted_tree import XGBoostTrainer
 
@@ -17,7 +16,7 @@ async def test_cross_validation(date_df: DataFrame) -> None:
             3,
             lambda pipeline: pipeline.train(
                 XGBoostTrainer(), input_features=['y_values', 'x_values'], target_feature='bool_classification'
-            ).evaluate([Evaluators.confusion_matrix()]),
+            ),
         )
         .run()
     )

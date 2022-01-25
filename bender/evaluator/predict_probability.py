@@ -40,14 +40,13 @@ class ProbabilityForClassification(Evaluator):
         # Scores compared to true labels
         fig, ax = plt.subplots(1, 1, figsize=(20, 10))
         n_bins = 50 if self.num_bins is None else self.num_bins
-        bin_width = 1 / n_bins
         plt.xlim(0, 1)
         sns.histplot(
             data=pred_result,
             x=self.classification_of_interest,
             hue=true_results,
             multiple='stack',
-            binwidth=bin_width,
+            bins=n_bins,
             legend=False,
             ax=ax,
         )
