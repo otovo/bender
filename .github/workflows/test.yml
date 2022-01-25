@@ -24,7 +24,7 @@ jobs:
         id: cache-venv
         with:
           path: .venv
-          key: venv-1  # increment to reset
+          key: venv-2  # increment to reset
       - run: |
           python -m venv .venv --upgrade-deps
           source .venv/bin/activate
