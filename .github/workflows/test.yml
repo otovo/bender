@@ -60,7 +60,7 @@ jobs:
         id: cache-venv
         with:
           path: .venv
-          key: ${{ hashFiles('**/poetry.lock') }}-10
+          key: ${{ hashFiles('**/poetry.lock') }}-11
       - run: |
           python -m venv .venv --upgrade-deps
           source .venv/bin/activate
