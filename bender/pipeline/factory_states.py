@@ -187,7 +187,7 @@ class PredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]
         )
 
 
-class CrossValidate(RunnablePipeline[DataFrame]):
+class CrossValidate(RunnablePipeline[float]):
 
     target: str
     k_fold: int
@@ -198,22 +198,25 @@ class CrossValidate(RunnablePipeline[DataFrame]):
         pipeline: RunnablePipeline[DataFrame],
         target: str,
         k_fold: int,
-        validation: Callable[[SplitedData], RunnablePipeline],
+        validation: Callable[[SplitedData], RunnablePipeline[float]],
     ) -> None:
         self.k_fold = k_fold
         self.target = target
         self.pipeline = pipeline
         self.validation = validation
 
-    async def run(self) -> DataFrame:
+    async def run(self) -> float:
         train_ratio = (self.k_fold - 1) / self.k_fold
         offset_ratio = 1 / self.k_fold
+        score_sum = float(0)
         for i in range(0, self.k_fold):
             data_pipe = SplitedData(
                 self.pipeline, SplitStrategies.uniform_ratio(self.target, train_ratio, offset_ratio * i)
             )
             pipe = self.validation(data_pipe)
-            await pipe.run()
+            score_sum += await pipe.run()
+
+        return score_sum / self.k_fold
 
 
 class ProbalisticPredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]):
