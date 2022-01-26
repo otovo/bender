@@ -209,14 +209,25 @@ class CrossValidate(RunnablePipeline[float]):
         train_ratio = (self.k_fold - 1) / self.k_fold
         offset_ratio = 1 / self.k_fold
         score_sum = float(0)
+        numb_of_scores = 0
         for i in range(0, self.k_fold):
             data_pipe = SplitedData(
                 self.pipeline, SplitStrategies.uniform_ratio(self.target, train_ratio, offset_ratio * i)
             )
             pipe = self.validation(data_pipe)
-            score_sum += await pipe.run()
+            score = await pipe.run()
 
-        return score_sum / self.k_fold
+            if not score or not isinstance(score, (float, int)):
+                logger.info(f'K-fold corss validation returned invalid metric: {score}')
+                continue
+
+            score_sum += score
+            numb_of_scores += 1
+
+        if numb_of_scores > 0:
+            return score_sum / numb_of_scores
+        else:
+            return float('nan')
 
 
 class ProbalisticPredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]]):
