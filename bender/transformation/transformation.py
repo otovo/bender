@@ -262,7 +262,7 @@ class UnpackNumber(UnpackPolicy):
 class UnpackString(UnpackPolicy):
     def unpack(self, column: Series, key: str) -> Series:
         bracket = '}'
-        regex_str = rf'"{key}"[\s:]+"([\w ]+)["{bracket},]'
+        regex_str = rf'"{key}"[\s:]+"([\w\d\s\\.-]+)["{bracket},]'
         return column.astype(str).str.extract(regex_str).astype(str)
 
 
@@ -503,7 +503,7 @@ class LogToConsole(Transformation):
         return df
 
 
-class ToCatagorical(Transformation):
+class ToCategorical(Transformation):
 
     input: str
     output: str

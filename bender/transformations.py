@@ -19,7 +19,7 @@ from bender.transformation.transformation import (
     Relation,
     SetIndex,
     SplitString,
-    ToCatagorical,
+    ToCategorical,
     UnpackJson,
     UnpackPolicy,
 )
@@ -56,8 +56,8 @@ class Transformations:
         return FillMissingValue(feature, policy)
 
     @staticmethod
-    def to_catigorical(feature: str, output: Optional[str] = None) -> ToCatagorical:
-        return ToCatagorical(feature, feature if output is None else output)
+    def to_categorical(feature: str, output: Optional[str] = None) -> ToCategorical:
+        return ToCategorical(feature, feature if output is None else output)
 
     @staticmethod
     def log_to_console(data: Callable[[DataFrame], Any]) -> LogToConsole:
