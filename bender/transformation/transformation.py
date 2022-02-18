@@ -352,7 +352,7 @@ class Relation(Transformation):
     async def transform(self, df: DataFrame) -> DataFrame:
         mask = df[self.value_key].isna() | df[self.per_key].isna() | df[self.per_key] == 0
         df.loc[mask, self.output_key] = np.nan
-        df.loc[~mask, self.output_key] = df.loc[mask, self.value_key] / df.loc[mask, self.per_key]
+        df.loc[~mask, self.output_key] = df.loc[~mask, self.value_key] / df.loc[~mask, self.per_key]
         return df
 
 
