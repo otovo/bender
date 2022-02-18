@@ -78,3 +78,15 @@ async def test_schema(date_df: DataFrame) -> None:
 
     for (key, value) in schema.items():
         assert result_df[key].dtype == value.data_type
+
+
+async def test_ratio() -> None:
+    df = pd.DataFrame(
+        {
+            'num': [0, np.nan, None, 0, 3, 2],
+            'denum': [1, 2, 3, 4, 6, 0],
+            'expected': [0, np.nan, np.nan, 0, 0.5, np.nan],
+        }
+    )
+    result_df = await Transformations.ratio('num', 'denum', 'test').transform(df)
+    assert result_df['expected'].equals(result_df['test'])
