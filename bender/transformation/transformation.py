@@ -248,7 +248,7 @@ class UnpackNumber(UnpackPolicy):
 
     def unpack(self, column: Series, key: str) -> Series:
         bracket = '}'
-        regex_str = rf'"{key}"[\s:]+(\d+)[{bracket},]'
+        regex_str = rf'"{key}"[\s:]+"?([\d.]+)"?[{bracket},]'
         grouped = column.astype(str).str.extractall(regex_str).reset_index(level='match', drop=True).reset_index()
         grouped.columns = ['index', 'value']
         # Is needed to set type to float, as it can otherwise lead to bugs

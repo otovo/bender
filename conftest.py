@@ -49,7 +49,7 @@ def json_df() -> DataFrame:
             'json_data': [
                 # Different json formatting is intentional
                 # Therefore testing if the regex is correct
-                '[{"value": 1},{"value": 1},{"value":2, "other": 10},{"value": 4}]',
+                '[{"value": 1},{"value": 1},{"value":2, "other": 10},{"value": "4"}]',
                 '[{"value":   1},{"value": 1},{"value": 1},{"value": 1}]',
             ],
             'value_median': [1.5, 1],
