@@ -25,7 +25,6 @@ from bender.model_loader.model_loader import ModelLoadable, ModelLoader
 from bender.model_trainer.interface import ModelTrainer, Trainable
 from bender.pipeline.interface import RunnablePipeline
 from bender.prediction_extractor import Predictable, PredictionExtractor, PredictionOutput, ProbabilisticPredictable
-from bender.split_strategies import SplitStrategies
 from bender.split_strategy.split_strategy import Splitable, SplitStrategy, TrainingDataSet
 from bender.trained_model.interface import TrainedModel, TrainedProbabilisticModel
 from bender.transformation.transformation import Processable, Transformation
@@ -187,6 +186,15 @@ class PredictionPipeline(RunnablePipeline[tuple[TrainedModel, DataFrame, Series]
         )
 
 
+class IndexSplit(SplitStrategy):
+    def __init__(self, train_index, test_index):
+        self.train_index = train_index
+        self.test_index = test_index
+
+    async def split(self, df: DataFrame) -> tuple[DataFrame, DataFrame]:
+        return (df.iloc[self.train_index], df.iloc[self.test_index])
+
+
 class CrossValidate(RunnablePipeline[float]):
 
     target: str
@@ -206,13 +214,17 @@ class CrossValidate(RunnablePipeline[float]):
         self.validation = validation
 
     async def run(self) -> float:
-        train_ratio = (self.k_fold - 1) / self.k_fold
-        offset_ratio = 1 / self.k_fold
+        from sklearn.model_selection import StratifiedKFold
+
+        from bender.importers import DataImporters
+
         score_sum = float(0)
         numb_of_scores = 0
-        for i in range(0, self.k_fold):
+        data = await self.pipeline.run()
+        skf = StratifiedKFold(n_splits=self.k_fold)
+        for train_index, test_index in skf.split(data, data[self.target]):
             data_pipe = SplitedData(
-                self.pipeline, SplitStrategies.uniform_ratio(self.target, train_ratio, offset_ratio * i)
+                DataImporters.literal(data), IndexSplit(train_index=train_index, test_index=test_index)
             )
             pipe = self.validation(data_pipe)
             score = await pipe.run()
