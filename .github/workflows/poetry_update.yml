@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: poetry-cache
         with:
           path: ~/.local
@@ -23,7 +23,7 @@ jobs:
         with:
           virtualenvs-create: false
           version: 1.1.11
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: cache-venv
         with:
           path: .venv
