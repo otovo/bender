@@ -64,7 +64,7 @@ jobs:
           delete-branch: true
           author: Sondre Lillebø Gundersen <sondrelg@otovo.com>
           committer: Sondre Lillebø Gundersen <sondrelg@otovo.com>
-      - uses: peter-evans/enable-pull-request-automerge@v1
+      - uses: peter-evans/enable-pull-request-automerge@v3
         if: steps.cpr.outputs.pull-request-operation == 'created'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
